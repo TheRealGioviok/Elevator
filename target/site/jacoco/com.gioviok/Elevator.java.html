@@ -1,0 +1,422 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="it"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Elevator.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">elevator</a> &gt; <a href="index.source.html" class="el_package">com.gioviok</a> &gt; <span class="el_source">Elevator.java</span></div><h1>Elevator.java</h1><pre class="source lang-java linenums">package com.gioviok;
+
+import java.util.ArrayList;
+
+/**
+ * The elevator class has a current floor, a moving direction and a list of
+ * floors to visit. It has also information about his weight.
+ *
+ * @author gioviok
+ * @version 1.0
+ * @since 1.0
+ * @see Floor
+ * @see Key
+ */
+public class Elevator {
+
+    // The current floor of the elevator.
+    private Floor currentFloor;
+
+    // The moving direction enum.
+<span class="fc" id="L21">    public enum MovingDirection {</span>
+<span class="fc" id="L22">        UP, DOWN, STATIONARY</span>
+    }
+
+    // The moving direction of the elevator.
+    private MovingDirection movingDirection;
+
+    // The list of floors to visit.
+<span class="fc" id="L29">    private ArrayList&lt;Floor&gt; floorsToVisit = new ArrayList&lt;&gt;();</span>
+
+    // The weight of the elevator.
+    private double elevatorWeight;
+
+    // The maximum weight that the elevator can carry.
+    private double maxWeight;
+
+    // The persons on the elevator.
+<span class="fc" id="L38">    private ArrayList&lt;Person&gt; persons = new ArrayList&lt;&gt;();</span>
+
+    /**
+     * Current floor getter.
+     * 
+     * @return the current floor.
+     * @see Floor
+     */
+    public Floor getCurrentFloor() {
+<span class="fc" id="L47">        return currentFloor;</span>
+    }
+
+    // Shadow constructor. (State after this constructor is invalid)
+<span class="fc" id="L51">    public Elevator() {</span>
+<span class="fc" id="L52">        this.currentFloor = null;</span>
+<span class="fc" id="L53">        this.movingDirection = MovingDirection.STATIONARY;</span>
+<span class="fc" id="L54">        this.elevatorWeight = 0;</span>
+<span class="fc" id="L55">        this.maxWeight = 0;</span>
+<span class="fc" id="L56">    }</span>
+
+    /**
+     * The constructor of the elevator.
+     *
+     * @param currentFloor    The current floor of the elevator.
+     * @param movingDirection The moving direction of the elevator.
+     * @param floorsToVisit   The list of floors to visit.
+     * @param persons         The persons on the elevator.
+     * @param weight          The weight of the elevator.
+     * @param maxWeight       The maximum weight that the elevator can carry.
+     */
+<span class="fc" id="L68">    public Elevator(Floor currentFloor, MovingDirection movingDirection, double weight, double maxWeight) {</span>
+<span class="fc" id="L69">        this.currentFloor = currentFloor;</span>
+<span class="fc" id="L70">        this.movingDirection = movingDirection;</span>
+<span class="fc" id="L71">        this.elevatorWeight = weight;</span>
+<span class="fc" id="L72">        this.maxWeight = maxWeight;</span>
+<span class="fc" id="L73">    }</span>
+
+    /**
+     * The initializer of the elevator.
+     * Used for unit testing.
+     *
+     * @param currentFloor    The current floor of the elevator.
+     * @param movingDirection The moving direction of the elevator.
+     * @param weight          The weight of the elevator.
+     * @param maxWeight       The maximum weight that the elevator can carry.
+     */
+    void setup(Floor currentFloor, MovingDirection movingDirection, double weight, double maxWeight) {
+<span class="fc" id="L85">        this.currentFloor = currentFloor;</span>
+<span class="fc" id="L86">        this.movingDirection = movingDirection;</span>
+<span class="fc" id="L87">        this.elevatorWeight = weight;</span>
+<span class="fc" id="L88">        this.maxWeight = maxWeight;</span>
+<span class="fc" id="L89">    }</span>
+
+    /**
+     * The requestRide method requests a ride to the floor.
+     * 
+     * @param floor The floor to go to.
+     * @param key   The key to use.
+     * @return True if the floor was added to the list of floors to visit, false
+     *         otherwise.
+     * @throws IllegalArgumentException If the key is not valid.
+     * @throws IllegalArgumentException If the floor is null.
+     */
+    boolean requestRide(Floor floor, Key key) {
+<span class="fc bfc" id="L102" title="All 2 branches covered.">        if (floor == null) {</span>
+<span class="fc" id="L103">            throw new IllegalArgumentException(&quot;The floor cannot be null.&quot;);</span>
+        }
+<span class="fc bfc" id="L105" title="All 2 branches covered.">        if (floor == currentFloor) {</span>
+<span class="fc" id="L106">            return false;</span>
+        }
+        // We check if the floor is accessible with the keys currently in the elevator.
+<span class="fc bfc" id="L109" title="All 2 branches covered.">        if (floor.requestAccess(key)) {</span>
+            // We check if the floor isn't already in the list of floors to visit.
+<span class="fc bfc" id="L111" title="All 2 branches covered.">            if (floorsToVisit.contains(floor)) {</span>
+<span class="fc" id="L112">                return false;</span>
+            }
+            // We add the floor to the list of floors to visit.
+<span class="fc" id="L115">            floorsToVisit.add(floor);</span>
+            // If stationary, we set the moving direction.
+<span class="fc bfc" id="L117" title="All 2 branches covered.">            if (movingDirection == MovingDirection.STATIONARY) {</span>
+<span class="fc bfc" id="L118" title="All 2 branches covered.">                movingDirection = (floor.getDistance() &gt; currentFloor.getDistance()) ? MovingDirection.UP</span>
+<span class="fc" id="L119">                        : MovingDirection.DOWN;</span>
+            }
+            // print(2);
+<span class="fc" id="L122">            return true;</span>
+        }
+<span class="fc" id="L124">        throw new IllegalArgumentException(&quot;The key is not valid.&quot;);</span>
+    }
+
+    /**
+     * The requestHere method requests the elevator to stop at the current floor. It
+     * won't check for the key.
+     * 
+     * @param floor The floor to stop at.
+     * @return True if the floor was added to the list of floors to visit, false
+     *         otherwise.
+     * @throws IllegalArgumentException If the floor is null.
+     */
+    boolean requestHere(Floor floor) {
+<span class="fc bfc" id="L137" title="All 2 branches covered.">        if (floor == null){</span>
+<span class="fc" id="L138">            throw new IllegalArgumentException(&quot;The floor cannot be null.&quot;);</span>
+        }
+<span class="fc bfc" id="L140" title="All 2 branches covered.">        if (floor == currentFloor) {</span>
+<span class="fc" id="L141">            return false;</span>
+        }
+        // We add the floor to the list of floors to visit.
+<span class="fc bfc" id="L144" title="All 2 branches covered.">        if (floorsToVisit.contains(floor)) {</span>
+<span class="fc" id="L145">            return false;</span>
+        }
+<span class="fc" id="L147">        floorsToVisit.add(floor);</span>
+        // If stationary, we set the moving direction.
+<span class="fc bfc" id="L149" title="All 2 branches covered.">        if (movingDirection == MovingDirection.STATIONARY) {</span>
+<span class="fc bfc" id="L150" title="All 2 branches covered.">            movingDirection = (floor.getDistance() &gt; currentFloor.getDistance()) ? MovingDirection.UP</span>
+<span class="fc" id="L151">                    : MovingDirection.DOWN;</span>
+        }
+        // print(2);
+<span class="fc" id="L154">        return true;</span>
+    }
+
+    /**
+     * The halt method stops the elevator. It also unboards every person at the
+     * current floor.
+     * 
+     * @note this method may produce undesired behaviour when unboarding
+     *       unauthorized persons to the current floor.
+     */
+    public void halt() {
+<span class="fc" id="L165">        movingDirection = MovingDirection.STATIONARY;</span>
+        // We clear the list of floors to visit. We do this since we don't know if a
+        // floor accessible with the keys is present in the list.
+        // It could in fact happen that the person using the key will be forced to exit
+        // the elevator, and we don't want to make non authorized people have access to
+        // that floor, at least when the
+        // authorized person is not in the elevator.
+<span class="fc" id="L172">        clearRequests();</span>
+<span class="fc" id="L173">    }</span>
+
+    /**
+     * The isOverloaded method checks if the elevator is overloaded.
+     * 
+     * @return True if the elevator is overloaded, false otherwise.
+     */
+    public boolean isOverloaded() {
+<span class="fc bfc" id="L181" title="All 2 branches covered.">        return getCurrentLoad() &gt; maxWeight;</span>
+    }
+
+    /**
+     * The clearRequests method clears the list of floors to visit.
+     */
+    private void clearRequests() {
+<span class="fc" id="L188">        floorsToVisit.clear();</span>
+<span class="fc" id="L189">    }</span>
+
+    /**
+     * The run method runs the elevator.
+     * 
+     * @return True if the elevator has no more floors to visit, false otherwise.
+     */
+    public boolean run() throws IllegalStateException {
+
+        // If the elevator is overloaded, we throw an exception.
+<span class="fc bfc" id="L199" title="All 2 branches covered.">        if (isOverloaded()) {</span>
+            // We halt the elevator.
+<span class="fc" id="L201">            halt();</span>
+<span class="fc" id="L202">            throw new IllegalStateException(&quot;The elevator is overloaded. (Weight: &quot; + getCurrentLoad()</span>
+<span class="fc" id="L203">                    + &quot;kg, Max weight: &quot; + maxWeight + &quot;kg)&quot;);</span>
+        }
+        // We get the next floor.
+<span class="fc" id="L206">        Floor nextFloor = nextFloor();</span>
+        // We check if the next floor is null.
+<span class="fc bfc" id="L208" title="All 2 branches covered.">        if (nextFloor == null) {</span>
+            // We halt the elevator.
+<span class="fc" id="L210">            halt();</span>
+<span class="fc" id="L211">            return true;</span>
+        }
+
+        // For now, we just move to the next floor.
+<span class="fc" id="L215">        currentFloor = nextFloor;</span>
+        // We move every person on the elevator.
+<span class="fc bfc" id="L217" title="All 2 branches covered.">        for (Person person : persons) {</span>
+<span class="fc" id="L218">            person.setCurrentFloor(currentFloor);</span>
+        }
+        // We remove the floor from the list of floors to visit.
+<span class="fc" id="L221">        floorsToVisit.remove(nextFloor);</span>
+
+        // print(2);
+
+<span class="fc bfc" id="L225" title="All 2 branches covered.">        if (floorsToVisit.isEmpty()) {</span>
+            // We halt the elevator.
+<span class="fc" id="L227">            halt();</span>
+<span class="fc" id="L228">            return true;</span>
+        }
+<span class="fc" id="L230">        return false;</span>
+    }
+
+    /**
+     * The nextFloor method returns the next floor to visit.
+     * 
+     * @return The next floor to visit. Null if there is no next floor.
+     * @see Floor
+     * @see Key
+     */
+    private Floor nextFloor() {
+        // We check if there is a next floor.
+<span class="fc bfc" id="L242" title="All 2 branches covered.">        if (floorsToVisit.size() &gt; 0) {</span>
+            // We look for the closest floor to the current floor, in the current moving
+            // direction.
+<span class="fc" id="L245">            Floor closestFloor = null;</span>
+<span class="fc" id="L246">            int closestFloorDistance = Integer.MAX_VALUE;</span>
+<span class="fc bfc" id="L247" title="All 2 branches covered.">            for (Floor floor : floorsToVisit) {</span>
+                int distance;
+                // Are we going up or down?
+<span class="fc bfc" id="L250" title="All 2 branches covered.">                if (movingDirection == MovingDirection.UP) {</span>
+<span class="fc" id="L251">                    distance = floor.getDistance() - currentFloor.getDistance();</span>
+<span class="fc" id="L252">                } else {</span>
+<span class="fc" id="L253">                    distance = currentFloor.getDistance() - floor.getDistance();</span>
+                }
+                // If distance is negative or 0, the floor is in the wrong direction or the same
+                // floor (shouldn't happen).
+<span class="fc bfc" id="L257" title="All 2 branches covered.">                if (distance &lt;= 0)</span>
+<span class="fc" id="L258">                    continue;</span>
+                // If the distance is smaller than the closest floor distance, we update the
+                // closest floor.
+<span class="fc bfc" id="L261" title="All 2 branches covered.">                if (distance &lt; closestFloorDistance) {</span>
+<span class="fc" id="L262">                    closestFloor = floor;</span>
+<span class="fc" id="L263">                    closestFloorDistance = distance;</span>
+                }
+            }
+            // If we didn't find a floor, we can inverse the direction.
+<span class="fc bfc" id="L267" title="All 2 branches covered.">            if (closestFloor == null) {</span>
+<span class="pc bpc" id="L268" title="1 of 2 branches missed.">                movingDirection = (movingDirection == MovingDirection.UP) ? MovingDirection.DOWN : MovingDirection.UP;</span>
+<span class="fc" id="L269">                return nextFloor();</span>
+            }
+<span class="fc" id="L271">            return closestFloor;</span>
+        }
+        // We return null.
+<span class="fc" id="L274">        movingDirection = MovingDirection.STATIONARY;</span>
+<span class="fc" id="L275">        return null;</span>
+    }
+
+    /**
+     * The getCurrentLoad method returns the current load of the elevator.
+     * It calculates it by adding the weight of the elevator and the weight of every
+     * person in the elevator.
+     * 
+     * @return The current load of the elevator.
+     * @see Person
+     */
+    public double getCurrentLoad() {
+<span class="fc" id="L287">        double currentLoad = elevatorWeight;</span>
+<span class="fc bfc" id="L288" title="All 2 branches covered.">        for (Person person : persons) {</span>
+<span class="fc" id="L289">            currentLoad += person.getWeight();</span>
+        }
+<span class="fc" id="L291">        return currentLoad;</span>
+    }
+
+    /**
+     * The getCurrentMovingDirection method returns the current moving direction of
+     * the elevator.
+     * 
+     * @return The current moving direction of the elevator.
+     */
+    public MovingDirection getCurrentMovingDirection() {
+<span class="fc" id="L301">        return movingDirection;</span>
+    }
+
+    /**
+     * The board method adds a person to the elevator.
+     * 
+     * @param person The person to add.
+     * @return True if the person was added, false otherwise.
+     * @throws IllegalArgumentException If the person is not on the same floor as the elevator.
+     * @throws IllegalArgumentException If the person is already in the elevator.
+     * @throws IllegalArgumentException If the person is null.
+     * @see Person
+     */
+    public boolean board(Person person) {
+<span class="fc bfc" id="L315" title="All 2 branches covered.">        if (person == null) {</span>
+<span class="fc" id="L316">            throw new IllegalArgumentException(&quot;The person cannot be null.&quot;);</span>
+        }
+        // We check if the person is on the same floor as the elevator.
+<span class="fc bfc" id="L319" title="All 2 branches covered.">        if (person.getCurrentFloor() != currentFloor) {</span>
+<span class="fc" id="L320">            throw new IllegalArgumentException(</span>
+<span class="fc" id="L321">                    &quot;The person is not on the same floor as the elevator: Person is on floor &quot;</span>
+<span class="fc" id="L322">                            + person.getCurrentFloor().getName() + &quot;, elevator is on floor &quot; + currentFloor.getName());</span>
+        }
+        // We check if the person is not already in the elevator.
+<span class="fc bfc" id="L325" title="All 2 branches covered.">        if (persons.contains(person)) {</span>
+<span class="fc" id="L326">            throw new IllegalArgumentException(&quot;The person is already in the elevator.&quot;);</span>
+        }
+        // We add the person to the elevator.
+<span class="fc" id="L329">        return persons.add(person);</span>
+    }
+
+    /**
+     * The disembark method removes a person from the elevator.
+     * 
+     * @param person The person to remove.
+     * @return True if the person was removed, false otherwise.
+     * @throws IllegalArgumentException If the person is not in the elevator.
+     * @throws IllegalArgumentException If the person is null.
+     * @see Person
+     */
+    public boolean disembark(Person person) {
+<span class="fc bfc" id="L342" title="All 2 branches covered.">        if (person == null) {</span>
+<span class="fc" id="L343">            throw new IllegalArgumentException(&quot;The person cannot be null.&quot;);</span>
+        }
+        // We check if the person is in the elevator.
+<span class="fc bfc" id="L346" title="All 2 branches covered.">        if (!persons.contains(person)) {</span>
+<span class="fc" id="L347">            throw new IllegalArgumentException(&quot;The person is not in the elevator.&quot;);</span>
+        }
+        // We remove the person from the elevator.
+<span class="fc" id="L350">        return persons.remove(person);</span>
+    }
+
+    /**
+     * The getWeight method returns the weight of the elevator. It doesn't include
+     * the weight of the people.
+     * 
+     * @return The weight of the elevator.
+     */
+    public double getWeight() {
+<span class="fc" id="L360">        return elevatorWeight;</span>
+    }
+
+    /**
+     * The getMaxLoad method returns the max load of the elevator.
+     * 
+     * @return The max load of the elevator.
+     */
+    public double getMaxLoad() {
+<span class="fc" id="L369">        return maxWeight;</span>
+    }
+
+    /**
+     * The numberOfPeople method returns the number of people in the elevator.
+     * 
+     * @return The number of people in the elevator.
+     * @see Person
+     */
+    public int numberOfPeople() {
+<span class="fc" id="L379">        return persons.size();</span>
+    }
+
+    /**
+     * The setWeight method sets the weight of the elevator's cabin.
+     * 
+     * @param weight The weight to set.
+     */
+    public void setWeight(double weight) {
+<span class="fc" id="L388">        elevatorWeight = weight;</span>
+<span class="fc" id="L389">    }</span>
+
+    /**
+     * The setMaxLoad method sets the max load of the elevator.
+     * 
+     * @param maxLoad The max load to set.
+     */
+    public void setMaxLoad(double maxLoad) {
+<span class="fc" id="L397">        maxWeight = maxLoad;</span>
+<span class="fc" id="L398">    }</span>
+
+    /**
+     * The setCurrentFloor method sets the current floor of the elevator.
+     * 
+     * @param floor
+     * @note This method is to be used for initialization. For all other purposes,
+     *       the run method should be the only one to modify the current floor.
+     */
+    void setCurrentFloor(Floor floor) {
+<span class="fc" id="L408">        currentFloor = floor;</span>
+<span class="fc" id="L409">    }</span>
+
+    /**
+     * The hasPerson method returns true if the elevator has a certain person, false
+     * otherwise.
+     * 
+     * @param person
+     * @return True if the elevator has the person, false otherwise.
+     */
+    boolean hasPerson(Person person) {
+<span class="fc" id="L419">        return persons.contains(person);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

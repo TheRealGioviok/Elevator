@@ -1,0 +1,11 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+elevator,com.gioviok,Person,0,340,4,46,0,79,4,44,0,23
+elevator,com.gioviok,Simulator.new Comparator() {...},12,0,0,0,2,0,2,0,2,0
+elevator,com.gioviok,Simulator,5627,225,465,16,952,61,277,15,15,12
+elevator,com.gioviok,Simulator.EditorMode,44,0,0,0,5,0,1,0,1,0
+elevator,com.gioviok,Key,0,140,1,9,0,33,1,17,0,13
+elevator,com.gioviok,Floor,0,120,2,18,0,35,2,22,0,14
+elevator,com.gioviok,App,148,0,4,0,24,0,4,0,2,0
+elevator,com.gioviok,Elevator.MovingDirection,0,34,0,0,0,2,0,1,0,1
+elevator,com.gioviok,Building,0,496,1,59,0,99,1,55,0,26
+elevator,com.gioviok,Elevator,2,436,1,57,0,114,1,50,0,22

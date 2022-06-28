@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="it"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>App.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">elevator</a> &gt; <a href="index.source.html" class="el_package">com.gioviok</a> &gt; <span class="el_source">App.java</span></div><h1>App.java</h1><pre class="source lang-java linenums">package com.gioviok;
+
+<span class="nc" id="L3">public class App {</span>
+
+    public static void main(String[] args) {
+
+        // If user passed --no-ansi, we disable ANSI colors.
+<span class="nc bnc" id="L8" title="All 4 branches missed.">        if (args.length &gt; 0 &amp;&amp; args[0].equals(&quot;--no-ansi&quot;)) {</span>
+<span class="nc" id="L9">            Simulator.ansiSwitchOff();</span>
+        }
+
+<span class="nc" id="L12">        Simulator simulator = new Simulator();</span>
+<span class="nc" id="L13">        simulator.init()</span>
+<span class="nc" id="L14">                .nameBuilding(&quot;Bank&quot;)</span>
+<span class="nc" id="L15">                .addNewFloor(&quot;Ground floor&quot;, 0, 0)</span>
+<span class="nc" id="L16">                .addNewFloor(&quot;First floor&quot;, 3000, 3000)</span>
+<span class="nc" id="L17">                .addNewFloor(&quot;Second floor&quot;, 123, 6000)</span>
+<span class="nc" id="L18">                .addNewFloor(&quot;Third floor&quot;, 234, 9000)</span>
+<span class="nc" id="L19">                .addNewFloor(&quot;Fourth floor&quot;, 345, 12000)</span>
+<span class="nc" id="L20">                .addNewFloor(&quot;Vault&quot;, 567, -7000)</span>
+<span class="nc" id="L21">                .addNewRole(&quot;Customer&quot;, &quot;Ground floor&quot;, &quot;First floor&quot;)</span>
+<span class="nc" id="L22">                .addNewRole(&quot;Employee&quot;, &quot;Ground floor&quot;, &quot;First floor&quot;, &quot;Second floor&quot;, &quot;Third floor&quot;)</span>
+<span class="nc" id="L23">                .addNewRole(&quot;Security&quot;, &quot;Ground floor&quot;, &quot;First floor&quot;, &quot;Second floor&quot;, &quot;Third floor&quot;, &quot;Vault&quot;)</span>
+<span class="nc" id="L24">                .addNewRole(&quot;Manager&quot;, &quot;Ground floor&quot;, &quot;First floor&quot;, &quot;Second floor&quot;, &quot;Third floor&quot;, &quot;Fourth floor&quot;,</span>
+<span class="nc" id="L25">                        &quot;Vault&quot;)</span>
+<span class="nc" id="L26">                .addModelPerson(&quot;Dayanand Portolese&quot;, 60)</span>
+<span class="nc" id="L27">                .addModelPerson(&quot;Sayres Saulsbery&quot;, 75)</span>
+<span class="nc" id="L28">                .addModelPerson(&quot;Milo Schop &quot;, 80)</span>
+<span class="nc" id="L29">                .addModelPerson(&quot;Mario Rossi&quot;, 70)</span>
+<span class="nc" id="L30">                .addModelPerson(&quot;Busbee Jerkins &quot;, 75);</span>
+<span class="nc" id="L31">        simulator.guiLoop();</span>
+<span class="nc" id="L32">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="it"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Floor.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">elevator</a> &gt; <a href="index.source.html" class="el_package">com.gioviok</a> &gt; <span class="el_source">Floor.java</span></div><h1>Floor.java</h1><pre class="source lang-java linenums">package com.gioviok;
+
+/**
+ * The Floor class contains the information about a floor.
+ * It has a name, a key (if it is accessible by only a key), and a distance from
+ * the ground.
+ * Once instantiated, the floor is only accessible by the elevator.
+ * 
+ * @author gioviok
+ * @version 1.0
+ * @since 1.0
+ * @see Elevator
+ * @see Key
+ */
+public class Floor implements Comparable&lt;Floor&gt;, Cloneable {
+    // The name of the floor.
+    private String name;
+    // The key of the floor. (0 if it does not have a key)
+    private int key;
+    // The distance from the ground (in millimeters).
+    private int distance;
+
+    /**
+     * The clone method of the floor.
+     * 
+     * @return A copy of the floor.
+     */
+    @Override
+    public Floor clone() {
+<span class="fc" id="L30">        return new Floor(name, key, distance);</span>
+    }
+
+    /**
+     * The empty constructor of the floor.
+     */
+<span class="fc" id="L36">    public Floor() {</span>
+<span class="fc" id="L37">    };</span>
+
+    /**
+     * The constructor of the floor.
+     * 
+     * @param name     The name of the floor.
+     * @param key      The key of the floor. (null if it does not have a key)
+     * @param distance The distance from the ground (in millimeters).
+     * @see Key
+     * @see Elevator
+     */
+<span class="fc" id="L48">    public Floor(String name, int key, int distance) {</span>
+<span class="fc" id="L49">        this.name = name;</span>
+<span class="fc" id="L50">        this.key = key;</span>
+<span class="fc" id="L51">        this.distance = distance;</span>
+<span class="fc" id="L52">    }</span>
+
+    /**
+     * The equals method of the floor.
+     * 
+     * @return True if the floor is equal to the other floor. False otherwise.
+     */
+    @Override
+    public boolean equals(Object other) {
+<span class="fc bfc" id="L61" title="All 2 branches covered.">        if (other == null) {</span>
+<span class="fc" id="L62">            return false;</span>
+        }
+<span class="fc bfc" id="L64" title="All 2 branches covered.">        if (other == this) {</span>
+<span class="fc" id="L65">            return true;</span>
+        }
+<span class="fc bfc" id="L67" title="All 2 branches covered.">        if (!(other instanceof Floor)) {</span>
+<span class="fc" id="L68">            return false;</span>
+        }
+<span class="fc" id="L70">        Floor otherFloor = (Floor) other;</span>
+<span class="pc bpc" id="L71" title="2 of 6 branches missed.">        return name.equals(otherFloor.name) &amp;&amp; key == otherFloor.key &amp;&amp; distance == otherFloor.distance;</span>
+    }
+
+    /**
+     * The getName method returns the name of the floor.
+     * 
+     * @return The name of the floor.
+     */
+    public String getName() {
+<span class="fc" id="L80">        return name;</span>
+    }
+
+    /**
+     * The getKey method returns the key of the floor.
+     * 
+     * @return The key of the floor. (null if it does not have a key)
+     */
+    public int getKey() {
+<span class="fc" id="L89">        return key;</span>
+    }
+
+    /**
+     * The getDistance method returns the distance from the ground of the floor.
+     * 
+     * @return The distance from the ground of the floor.
+     */
+    public int getDistance() {
+<span class="fc" id="L98">        return distance;</span>
+    }
+
+    /**
+     * The hasKey method returns true if the floor has a key, false otherwise.
+     * 
+     * @return True if the floor has a key, false otherwise.
+     */
+    public boolean hasKey() {
+<span class="fc bfc" id="L107" title="All 2 branches covered.">        return key != 0;</span>
+    }
+
+    /**
+     * The requestAccess method requests access to the floor.
+     * 
+     * @param key The key to use.
+     * @return True if the key can give access to the floor, false otherwise.
+     */
+    public boolean requestAccess(Key key) {
+        // We check if the elevator can go to the floor.
+<span class="fc bfc" id="L118" title="All 2 branches covered.">        if (!hasKey())</span>
+<span class="fc" id="L119">            return true;</span>
+<span class="fc bfc" id="L120" title="All 2 branches covered.">        if (key == null)</span>
+<span class="fc" id="L121">            return false;</span>
+        else {
+<span class="fc bfc" id="L123" title="All 2 branches covered.">            if (key.checkAccess(this.key))</span>
+<span class="fc" id="L124">                return true;</span>
+        }
+<span class="fc" id="L126">        return false;</span>
+    }
+
+    /**
+     * The toString method returns a the name of the floor. We declare it in order
+     * to mantain compatibility.
+     * 
+     * @return The name of the floor.
+     */
+    public String toString() {
+<span class="fc" id="L136">        return name;</span>
+    }
+
+    @Override
+    public int compareTo(Floor o) {
+<span class="fc" id="L141">        return this.distance - o.distance;</span>
+    }
+
+    /**
+     * Name setter.
+     * 
+     * @param name
+     * @return this
+     */
+    public Floor setName(String name) {
+<span class="fc" id="L151">        this.name = name;</span>
+<span class="fc" id="L152">        return this;</span>
+    }
+
+    /**
+     * Distance setter.
+     * 
+     * @param distance
+     * @return this
+     */
+    public Floor setDistance(int distance) {
+<span class="fc" id="L162">        this.distance = distance;</span>
+<span class="fc" id="L163">        return this;</span>
+    }
+
+    /**
+     * Key setter.
+     * 
+     * @param key
+     * @return this
+     */
+    public Floor setKey(int key) {
+<span class="fc" id="L173">        this.key = key;</span>
+<span class="fc" id="L174">        return this;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

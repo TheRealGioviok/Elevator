@@ -1,0 +1,427 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="it"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Building.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">elevator</a> &gt; <a href="index.source.html" class="el_package">com.gioviok</a> &gt; <span class="el_source">Building.java</span></div><h1>Building.java</h1><pre class="source lang-java linenums">package com.gioviok;
+
+import java.util.ArrayList;
+import java.util.Collections;
+
+public class Building {
+
+    // The name of the building.
+<span class="fc" id="L9">    private String name = &quot;_name_unset&quot;;</span>
+
+    // The entrance floor.
+    private Floor entranceFloor;
+
+    // The list of floors.
+<span class="fc" id="L15">    private ArrayList&lt;Floor&gt; floors = new ArrayList&lt;Floor&gt;();</span>
+
+    // The keys catalog.
+<span class="fc" id="L18">    private ArrayList&lt;Key&gt; keys = new ArrayList&lt;Key&gt;();</span>
+
+    // The list of persons.
+<span class="fc" id="L21">    private ArrayList&lt;Person&gt; persons = new ArrayList&lt;Person&gt;();</span>
+
+    // The elevator.
+    private Elevator elevator;
+
+    /**
+     * The getPersons method returns the list of persons registered in the building.
+     * 
+     * @return The list of persons registered in the building.
+     */
+    ArrayList&lt;Person&gt; getPersons() {
+<span class="fc" id="L32">        return persons;</span>
+    }
+
+    /**
+     * The getKeyNamed method returns the key with the given name. The key must be
+     * cloned to be used.
+     * 
+     * @param name The name of the key.
+     * @return The key with the given name, null if it does not exist.
+     * @see Cloneable
+     */
+    public Key getKeyNamed(String name) {
+<span class="fc bfc" id="L44" title="All 2 branches covered.">        if (name == null)</span>
+<span class="fc" id="L45">            return null;</span>
+<span class="fc bfc" id="L46" title="All 2 branches covered.">        for (Key key : keys) {</span>
+<span class="fc bfc" id="L47" title="All 2 branches covered.">            if (key.getName().equals(name)) {</span>
+<span class="fc" id="L48">                return key;</span>
+            }
+        }
+<span class="fc" id="L51">        return null;</span>
+    }
+
+    /**
+     * The registerKey method registers a key in the catalog. Name must be unique.
+     * 
+     * @param key The key to register.
+     * @return this.
+     */
+    public Building registerKey(Key key) throws IllegalArgumentException {
+        // Check if the key is already registered.
+<span class="fc bfc" id="L62" title="All 2 branches covered.">        for (Key k : keys) {</span>
+<span class="fc bfc" id="L63" title="All 2 branches covered.">            if (k.getName().equals(key.getName())) {</span>
+<span class="fc" id="L64">                throw new IllegalArgumentException(&quot;Key with name &quot; + key.getName() + &quot; already registered.&quot;);</span>
+            }
+        }
+        // Add the key to the catalog.
+<span class="fc" id="L68">        keys.add(key);</span>
+<span class="fc" id="L69">        return this;</span>
+    }
+
+    /**
+     * The setupElevator method sets up the elevator.
+     * 
+     * @param floor             The floor of the elevator (must be one of the floors
+     *                          of the building).
+     * @param direction         The current direction of the elevator.+
+     * @param elevatorWeight    The weight of the elevator.
+     * @param elevatorMaxWeight The maximum weight of the elevator.
+     * @return this.
+     */
+    public Building setupElevator(Floor floor, Elevator.MovingDirection direction, double elevatorWeight,
+            double elevatorMaxWeight) {
+<span class="fc bfc" id="L84" title="All 2 branches covered.">        if (this.elevator == null) {</span>
+<span class="fc" id="L85">            this.elevator = new Elevator();</span>
+        }
+<span class="fc bfc" id="L87" title="All 2 branches covered.">        elevator.setup((floor == null) ? entranceFloor : floor,</span>
+<span class="fc" id="L88">                        direction,</span>
+<span class="fc" id="L89">                        elevatorWeight,</span>
+<span class="fc" id="L90">                        elevatorMaxWeight</span>
+        );
+<span class="fc" id="L92">        return this;</span>
+    }
+
+    /**
+     * The removeKey method removes a key from the catalog.
+     * 
+     * @param key The key to remove.
+     * @return True if the key was removed, false otherwise.
+     */
+    public boolean removeKey(String name) {
+        // Check if the key is already registered.
+<span class="fc" id="L103">        Key key = getKeyNamed(name);</span>
+<span class="fc bfc" id="L104" title="All 2 branches covered.">        if (key == null) {</span>
+<span class="fc" id="L105">            return false;</span>
+        }
+        // Remove the key from the catalog.
+<span class="fc" id="L108">        return keys.remove(key);</span>
+    }
+
+    /**
+     * The registerPerson method registers a person to this building with the given
+     * key. Key must be one of our keys. Name must be unique.
+     * 
+     * @param Person  The person to register.
+     * @param keyName The keyName of the key to add (can be null).
+     * @param floor   The floor of the person (can be null, in which case the person
+     *                is on the entrance floor, if the building has one).
+     * @return The person registered.
+     * @throws IllegalArgumentException If a person with the same name is already
+     *                                  registered or the key is not one of our
+     *                                  keys.
+     * @throws IllegalStateException    If the building has no floors.
+     * @see Person
+     * @see Key
+     * @see Floor
+     */
+    public Person registerPerson(Person person, String keyName, Floor floor) throws IllegalArgumentException {
+        // Check if the person is already registered.
+<span class="fc bfc" id="L130" title="All 2 branches covered.">        for (Person p : persons) {</span>
+<span class="fc bfc" id="L131" title="All 2 branches covered.">            if (p.getName().equals(person.getName())) {</span>
+<span class="fc" id="L132">                throw new IllegalArgumentException(&quot;Person with name &quot; + person.getName() + &quot; already registered.&quot;);</span>
+            }
+        }
+        // Check if the key is one of our keys.
+<span class="fc bfc" id="L136" title="All 4 branches covered.">        if (keyName != null &amp;&amp; getKeyNamed(keyName) == null) {</span>
+<span class="fc" id="L137">            throw new IllegalArgumentException(&quot;Key &quot; + keyName + &quot; is not one of our keys.&quot;);</span>
+        }
+        // Check if the building has floors.
+<span class="fc bfc" id="L140" title="All 2 branches covered.">        if (getFloors().size() == 0) {</span>
+<span class="fc" id="L141">            throw new IllegalStateException(&quot;Building has no floors.&quot;);</span>
+        }
+        // Check if the floor is one of our floors.
+<span class="fc bfc" id="L144" title="All 4 branches covered.">        if (floor != null &amp;&amp; !getFloors().contains(floor)) {</span>
+<span class="fc" id="L145">            throw new IllegalArgumentException(&quot;Floor &quot; + floor.getName() + &quot; is not one of our floors.&quot;);</span>
+        }
+        // Add the person to the list.
+<span class="fc" id="L148">        Person p = person.setKey(getKeyNamed(keyName)).setCurrentBuilding(this)</span>
+<span class="fc bfc" id="L149" title="All 2 branches covered.">                .setCurrentFloor((floor == null) ? entranceFloor : floor);</span>
+<span class="fc" id="L150">        persons.add(p);</span>
+<span class="fc" id="L151">        return p;</span>
+    }
+
+    /**
+     * The null floor call of the registerPerson method.
+     * 
+     * @param person  The person to register.
+     * @param keyName The keyName to assign (can be null).
+     * @return The person registered.
+     * @throws IllegalArgumentException If a person with the same name is already
+     *                                  registered or the key is not one of our
+     *                                  keys.
+     * @throws IllegalStateException    If the building has no floors.
+     * @see Person
+     * @see Key
+     */
+    public Person registerPerson(Person person, String keyName) throws IllegalArgumentException {
+<span class="fc" id="L168">        return registerPerson(person, keyName, null);</span>
+    }
+
+    /**
+     * The getPersonNamed method returns the person with the given name. It returns
+     * null if the person does not exist.
+     * 
+     * @param name The name of the person.
+     * @return The person with the given name, null if it does not exist.
+     */
+    public Person getPersonNamed(String name) {
+<span class="fc bfc" id="L179" title="All 2 branches covered.">        for (Person p : persons) {</span>
+<span class="fc bfc" id="L180" title="All 2 branches covered.">            if (p.getName().equals(name)) {</span>
+<span class="fc" id="L181">                return p;</span>
+            }
+        }
+<span class="fc" id="L184">        return null;</span>
+    }
+
+    /**
+     * The removePerson method removes a person from the building.
+     * 
+     * @param string The name of the person to remove.
+     * @return The removed person, null if it does not exist.
+     * @see Person
+     */
+    public Person removePerson(String name) {
+        // Check if the person is already registered.
+<span class="fc" id="L196">        Person person = getPersonNamed(name);</span>
+<span class="fc bfc" id="L197" title="All 2 branches covered.">        if (person == null) {</span>
+<span class="fc" id="L198">            return null;</span>
+        }
+        // Remove the person from the list.
+<span class="fc" id="L201">        persons.remove(person);</span>
+<span class="fc" id="L202">        return person;</span>
+    }
+
+    /**
+     * The addFloor method adds a floor to the building. If the building has no
+     * entrance floor, the new floor is set to be the entrance floor.
+     * 
+     * @param floor The floor to add.
+     * @return this
+     * @throws IllegalArgumentException If there is already a floor with the same
+     *                                  name or height, or if the floor is null.
+     * @throws Error                    If inconsistency during the checks get
+     *                                  found.
+     * @note One should not try to catch the Error exception. It means that
+     *       something is wrong with the whole execution.
+     * @see Floor
+     * @see Error
+     */
+    public Building addFloor(Floor floor) throws IllegalArgumentException, Error {
+        // Check if the floor is null.
+<span class="fc bfc" id="L222" title="All 2 branches covered.">        if (floor == null) {</span>
+<span class="fc" id="L223">            throw new IllegalArgumentException(&quot;Floor is null.&quot;);</span>
+        }
+        // Check if the floor is already registered.
+<span class="fc bfc" id="L226" title="All 2 branches covered.">        for (Floor f : floors) {</span>
+<span class="fc bfc" id="L227" title="All 2 branches covered.">            if (f.getName().equals(floor.getName())) {</span>
+<span class="fc" id="L228">                throw new IllegalArgumentException(&quot;Floor with name &quot; + floor.getName() + &quot; already registered.&quot;);</span>
+            }
+<span class="fc bfc" id="L230" title="All 2 branches covered.">            if (f.getDistance() == floor.getDistance()) {</span>
+<span class="fc" id="L231">                throw new IllegalArgumentException(&quot;Floor with height &quot; + floor.getDistance() + &quot; already registered.&quot;);</span>
+            }
+        }
+        // We do a binary search to find the insertion index (floors are always sorted
+        // by distance to the ground level).
+<span class="fc" id="L236">        int index = Collections.binarySearch(floors, floor);</span>
+        // We expect the index to be negative since we are inserting a new floor.
+<span class="fc" id="L238">        index = -index - 1; // We get the insertion index.</span>
+        // Add the floor to the list.
+<span class="fc" id="L240">        floors.add(index, floor);</span>
+        // If the building has no entrance floor, the new floor is the entrance floor.
+<span class="fc bfc" id="L242" title="All 2 branches covered.">        if (entranceFloor == null) {</span>
+<span class="fc" id="L243">            entranceFloor = floor;</span>
+            // If the elevator is on null floor, it is on the entrance floor.
+<span class="pc bpc" id="L245" title="1 of 2 branches missed.">            if (elevator.getCurrentFloor() == null) {</span>
+<span class="fc" id="L246">                elevator.setCurrentFloor(entranceFloor);</span>
+            }
+        }
+<span class="fc" id="L249">        return this;</span>
+    }
+
+    /**
+     * The removeFloor method removes a floor from the building.
+     * 
+     * @param floor The floor to remove.
+     * @return True if the floor was removed, false otherwise.
+     */
+    public boolean removeFloor(Floor floor) {
+<span class="fc" id="L259">        return floors.remove(floor);</span>
+    }
+
+    /**
+     * The constructor of the building.
+     * 
+     * @param name The name of the building.
+     */
+<span class="fc" id="L267">    public Building(String name) {</span>
+<span class="fc" id="L268">        this.name = name;</span>
+<span class="fc" id="L269">        this.elevator = new Elevator();</span>
+<span class="fc" id="L270">    }</span>
+
+    /**
+     * The empty constructor of the building.
+     */
+<span class="fc" id="L275">    public Building() {</span>
+<span class="fc" id="L276">        this.elevator = new Elevator();</span>
+<span class="fc" id="L277">    };</span>
+
+    /**
+     * The getName method returns the name of the building.
+     * 
+     * @return The name of the building.
+     */
+    public String getName() {
+<span class="fc" id="L285">        return name;</span>
+    }
+
+    /**
+     * The setName method sets the name of the building.
+     * 
+     * @param name The name of the building.
+     */
+    public void setName(String name) {
+<span class="fc" id="L294">        this.name = name;</span>
+<span class="fc" id="L295">    }</span>
+
+    /**
+     * The getFloors method returns the list of floors.
+     * 
+     * @return The list of floors.
+     */
+    public ArrayList&lt;Floor&gt; getFloors() {
+<span class="fc" id="L303">        return floors;</span>
+    }
+
+    /**
+     * The getElevator method returns the elevator.
+     * 
+     * @return The elevator.
+     */
+    public Elevator getElevator() {
+<span class="fc" id="L312">        return elevator;</span>
+    }
+
+    /**
+     * The setElevator method sets the elevator.
+     * 
+     * @param elevator The elevator.
+     * @see Elevator
+     */
+    public void setElevator(Elevator elevator) {
+<span class="fc" id="L322">        this.elevator = elevator;</span>
+<span class="fc" id="L323">    }</span>
+
+    /**
+     * The callElevator method calls the elevator to a given floor by adding the
+     * floor to the list of floors to visit.
+     * 
+     * @param floor The floor to visit.
+     * @return true if the floor was added to the list of floors to visit, false
+     *         otherwise.
+     * @throws IllegalArgumentException If the floor is null.
+     */
+    public boolean callElevator(Floor floor) throws IllegalArgumentException {
+        // Check if the floor is null.
+<span class="fc bfc" id="L336" title="All 2 branches covered.">        if (floor == null) {</span>
+<span class="fc" id="L337">            throw new IllegalArgumentException(&quot;Floor is null.&quot;);</span>
+        }
+        // Add the floor to the list of floors to visit without checking the key.
+<span class="fc" id="L340">        return elevator.requestHere(floor);</span>
+    }
+
+    /**
+     * The getFloorNamed method returns the floor with the given name.
+     * 
+     * @param name The name of the floor.
+     * @return The floor with the given name, null if it does not exist.
+     * @see Floor
+     */
+    public Floor getFloorNamed(String name) {
+<span class="fc bfc" id="L351" title="All 2 branches covered.">        for (Floor floor : floors) {</span>
+<span class="fc bfc" id="L352" title="All 2 branches covered.">            if (floor.getName().equals(name)) {</span>
+<span class="fc" id="L353">                return floor;</span>
+            }
+        }
+<span class="fc" id="L356">        return null;</span>
+    }
+
+    /**
+     * The setEntranceFloorNamed method sets the entrance floor to the floor with
+     * the given name.
+     * 
+     * @param name The name of the floor.
+     * @return true if the floor was set as the entrance floor, false otherwise.
+     * @throws IllegalArgumentException If the name given is null or if the floor
+     *                                  with the given name does not exist.
+     * @see Floor
+     */
+    public boolean setEntranceFloorNamed(String name) throws IllegalArgumentException {
+        // Check if the name is null.
+<span class="fc bfc" id="L371" title="All 2 branches covered.">        if (name == null) {</span>
+<span class="fc" id="L372">            throw new IllegalArgumentException(&quot;Name is null.&quot;);</span>
+        }
+        // Check if the floor exists.
+<span class="fc" id="L375">        Floor floor = getFloorNamed(name);</span>
+<span class="fc bfc" id="L376" title="All 2 branches covered.">        if (floor == null) {</span>
+<span class="fc" id="L377">            throw new IllegalArgumentException(&quot;Floor with name &quot; + name + &quot; does not exist.&quot;);</span>
+        }
+        // Set the entrance floor.
+<span class="fc" id="L380">        entranceFloor = floor;</span>
+<span class="fc" id="L381">        return true;</span>
+    }
+
+    /**
+     * The numberOfFloors method returns the number of floors in the building.
+     */
+    public int numberOfFloors() {
+<span class="fc" id="L388">        return floors.size();</span>
+    }
+
+    /**
+     * The numberOfPeople method returns the number of people in the building.
+     */
+    public int numberOfPeople() {
+<span class="fc" id="L395">        return persons.size();</span>
+    }
+
+    /**
+     * The getEntranceFloor method returns the entrance floor.
+     * 
+     * @return The entrance floor.
+     */
+    public Floor getEntranceFloor() {
+<span class="fc" id="L404">        return entranceFloor;</span>
+    }
+
+    /**
+     * The numberOfKeys method returns the number of registered keys of the
+     * building.
+     * 
+     * @return The number of registered keys.
+     */
+    public int numberOfKeys() {
+<span class="fc" id="L414">        return keys.size();</span>
+    }
+
+    /**
+     * The getKeys method returns the catalog of keys.
+     * 
+     * @return The catalog of keys.
+     */
+    ArrayList&lt;Key&gt; getKeys() {
+<span class="fc" id="L423">        return keys;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

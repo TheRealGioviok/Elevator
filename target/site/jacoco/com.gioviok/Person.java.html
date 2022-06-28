@@ -1,0 +1,341 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="it"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Person.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">elevator</a> &gt; <a href="index.source.html" class="el_package">com.gioviok</a> &gt; <span class="el_source">Person.java</span></div><h1>Person.java</h1><pre class="source lang-java linenums">package com.gioviok;
+
+import java.util.ArrayList;
+
+/**
+ * The Person class contains the information about a person.
+ * It has a name, a weight, a current floor and a key (can be null).
+ * The person class is used in a prototype design pattern. The Person
+ */
+public class Person implements Cloneable {
+    // The catalog of all the people.
+<span class="fc" id="L12">    private static ArrayList&lt;Person&gt; catalog = new ArrayList&lt;Person&gt;();</span>
+
+    /**
+     * The registerPerson method registers a person in the catalog. Name must be
+     * unique.
+     * 
+     * @param person The person to register.
+     * @return this.
+     */
+    public static void registerPerson(Person person) throws IllegalArgumentException {
+        // Check if the person is already registered.
+<span class="fc bfc" id="L23" title="All 2 branches covered.">        for (Person p : Person.catalog) {</span>
+<span class="pc bpc" id="L24" title="1 of 2 branches missed.">            if (p.getName().equals(person.getName())) {</span>
+<span class="fc" id="L25">                throw new IllegalArgumentException(&quot;Person with name &quot; + person.getName() + &quot; already registered.&quot;);</span>
+            }
+        }
+        // Add the person to the catalog.
+<span class="fc" id="L29">        catalog.add(person);</span>
+<span class="fc" id="L30">    }</span>
+
+    /**
+     * The getPersonNamed method returns the person with the given name. The person
+     * must be cloned to be used.
+     * 
+     * @param name The name of the person.
+     * @return The person with the given name, null if it does not exist.
+     */
+    public static Person getPersonNamed(String name) {
+<span class="fc bfc" id="L40" title="All 2 branches covered.">        for (Person person : catalog) {</span>
+<span class="pc bpc" id="L41" title="1 of 2 branches missed.">            if (person.getName().equals(name)) {</span>
+<span class="fc" id="L42">                return person;</span>
+            }
+        }
+<span class="fc" id="L45">        return null;</span>
+    }
+
+    /**
+     * The removePerson method removes a person from the catalog.
+     * 
+     * @param name The name of the person to remove.
+     * @return True if the person was removed, false otherwise.
+     */
+    public static boolean removePerson(String name) {
+<span class="fc bfc" id="L55" title="All 2 branches covered.">        for (Person person : catalog) {</span>
+<span class="pc bpc" id="L56" title="1 of 2 branches missed.">            if (person.getName().equals(name)) {</span>
+<span class="fc" id="L57">                catalog.remove(person);</span>
+<span class="fc" id="L58">                return true;</span>
+            }
+        }
+<span class="fc" id="L61">        return false;</span>
+    }
+
+    // The name of the person.
+    private String name;
+    // The weight of the person.
+    private int weight;
+    // The current building of the person.
+    private Building currentBuilding;
+    // The current floor of the person.
+    private Floor currentFloor;
+    // The key of the person.
+    private Key key;
+
+    /**
+     * The Person constructor.
+     * 
+     * @param name
+     * @param weight
+     * @param currentBuilding
+     * @param currentFloor
+     * @param key
+     * @throw IllegalArgumentException if the name is null or empty.
+     * @throw IllegalArgumentException if the weight is non positive.
+     */
+<span class="fc" id="L86">    public Person(String name, int weight, Building currentBuilding, Floor currentFloor, Key key)</span>
+            throws IllegalArgumentException {
+<span class="fc bfc" id="L88" title="All 4 branches covered.">        if (name == null || name.isEmpty()) {</span>
+<span class="fc" id="L89">            throw new IllegalArgumentException(&quot;The name of the person cannot be null or empty.&quot;);</span>
+        }
+<span class="fc bfc" id="L91" title="All 2 branches covered.">        if (weight &lt;= 0) {</span>
+<span class="fc" id="L92">            throw new IllegalArgumentException(&quot;The weight of the person must be positive.&quot;);</span>
+        }
+<span class="fc" id="L94">        this.name = name;</span>
+<span class="fc" id="L95">        this.weight = weight;</span>
+<span class="fc" id="L96">        this.currentBuilding = currentBuilding;</span>
+<span class="fc" id="L97">        this.currentFloor = currentFloor;</span>
+<span class="fc" id="L98">        this.key = key;</span>
+<span class="fc" id="L99">    }</span>
+
+    /**
+     * The Person constructor.
+     * 
+     * @param name
+     * @param weight
+     * @throw IllegalArgumentException if the name is null or empty.
+     * @throw IllegalArgumentException if the weight is non positive.
+     */
+<span class="fc" id="L109">    public Person(String name, int weight) throws IllegalArgumentException {</span>
+<span class="fc bfc" id="L110" title="All 4 branches covered.">        if (name == null || name.isEmpty()) {</span>
+<span class="fc" id="L111">            throw new IllegalArgumentException(&quot;The name of the person cannot be null or empty.&quot;);</span>
+        }
+<span class="fc bfc" id="L113" title="All 2 branches covered.">        if (weight &lt;= 0) {</span>
+<span class="fc" id="L114">            throw new IllegalArgumentException(&quot;The weight of the person must be positive.&quot;);</span>
+        }
+<span class="fc" id="L116">        this.name = name;</span>
+<span class="fc" id="L117">        this.weight = weight;</span>
+<span class="fc" id="L118">    }</span>
+
+    /**
+     * The Person constructor.
+     */
+<span class="fc" id="L123">    public Person() {</span>
+<span class="fc" id="L124">    };</span>
+
+    /**
+     * Name getter.
+     * 
+     * @return The name of the person.
+     * @see String
+     */
+    public String getName() {
+<span class="fc" id="L133">        return name;</span>
+    }
+
+    /**
+     * Name setter.
+     * 
+     * @param name The name of the person.
+     * @return this.
+     * @throws IllegalArgumentException If the string is null or empty.
+     * @see String
+     */
+    public Person setName(String name) throws IllegalArgumentException {
+<span class="fc bfc" id="L145" title="All 4 branches covered.">        if (name == null || name.isEmpty()) {</span>
+<span class="fc" id="L146">            throw new IllegalArgumentException(&quot;Name cannot be null or empty.&quot;);</span>
+        }
+<span class="fc" id="L148">        this.name = name;</span>
+<span class="fc" id="L149">        return this;</span>
+    }
+
+    /**
+     * Weight getter.
+     * 
+     * @return The weight of the person.
+     */
+    public int getWeight() {
+<span class="fc" id="L158">        return weight;</span>
+    }
+
+    /**
+     * Weight setter.
+     * 
+     * @param weight The weight of the person.
+     * @return this.
+     * @throws IllegalArgumentException If the weight is non positive.
+     */
+    public Person setWeight(int weight) throws IllegalArgumentException {
+<span class="fc bfc" id="L169" title="All 2 branches covered.">        if (weight &lt;= 0) {</span>
+<span class="fc" id="L170">            throw new IllegalArgumentException(&quot;Weight must be positive.&quot;);</span>
+        }
+<span class="fc" id="L172">        this.weight = weight;</span>
+<span class="fc" id="L173">        return this;</span>
+    }
+
+    /**
+     * The callElevatorRide function calls the elevator to the current floor. It
+     * ignores the key, since the person is already at the floor.
+     * 
+     * @return True if the call was successful, false otherwise.
+     * @throws IllegalStateException If the person's current floor is null.
+     */
+    public boolean callElevatorRide() throws IllegalStateException {
+<span class="fc bfc" id="L184" title="All 2 branches covered.">        if (currentFloor == null) {</span>
+<span class="fc" id="L185">            throw new IllegalStateException(&quot;The person's current floor is null.&quot;);</span>
+        }
+<span class="fc" id="L187">        return currentBuilding.callElevator(currentFloor);</span>
+    }
+
+    /**
+     * The chooseFloor function chooses a floor to go to. It checks the key to be
+     * valid for the floor.
+     * 
+     * @param floor The floor to go to.
+     * @return True if the floor was chosen, exception otherwise
+     * @throws IllegalStateException    If the person's current floor or building is
+     *                                  null.
+     * @throws IllegalArgumentException If the person's key is not valid for the
+     *                                  floor.
+     */
+    public boolean chooseFloor(Floor floor) {
+<span class="pc bpc" id="L202" title="1 of 4 branches missed.">        if (currentFloor == null || currentBuilding == null) {</span>
+<span class="fc" id="L203">            throw new IllegalStateException(&quot;The person's current floor or building is null.&quot;);</span>
+        }
+        // We request the ride
+<span class="fc" id="L206">        return currentBuilding.getElevator().requestRide(floor, key);</span>
+    }
+
+    /**
+     * Key getter.
+     * 
+     * @return The key of the person.
+     * @see Key
+     */
+    public Key getKey() {
+<span class="fc" id="L216">        return key;</span>
+    }
+
+    /**
+     * Key setter.
+     * 
+     * @param key The key of the person.
+     * @return this.
+     * @see Key
+     */
+    public Person setKey(Key key) {
+<span class="fc" id="L227">        this.key = key;</span>
+<span class="fc" id="L228">        return this;</span>
+    }
+
+    /**
+     * Current building getter.
+     * 
+     * @return The current building of the person.
+     * @see Building
+     */
+    public Building getCurrentBuilding() {
+<span class="fc" id="L238">        return currentBuilding;</span>
+    }
+
+    /**
+     * Current building setter.
+     * 
+     * @param currentBuilding The current building of the person.
+     * @return this.
+     * @see Building
+     */
+    public Person setCurrentBuilding(Building currentBuilding) {
+<span class="fc" id="L249">        this.currentBuilding = currentBuilding;</span>
+<span class="fc" id="L250">        return this;</span>
+    }
+
+    /**
+     * Current floor getter.
+     * 
+     * @return The current floor of the person.
+     * @throws IllegalStateException If the person is not in a building.
+     */
+    public Floor getCurrentFloor() throws IllegalStateException {
+<span class="fc bfc" id="L260" title="All 2 branches covered.">        if (currentBuilding == null) {</span>
+<span class="fc" id="L261">            throw new IllegalStateException(&quot;The person is not in a building.&quot;);</span>
+        }
+<span class="fc" id="L263">        return currentFloor;</span>
+    }
+
+    /**
+     * Current floor setter.
+     * 
+     * @param currentFloor The current floor of the person.
+     * @return this.
+     * @throws IllegalStateException    If the person is not in a building.
+     * @throws IllegalArgumentException If the argument is not a floor of the
+     *                                  current building.
+     */
+    public Person setCurrentFloor(Floor currentFloor) throws IllegalStateException, IllegalArgumentException {
+<span class="fc bfc" id="L276" title="All 2 branches covered.">        if (currentBuilding == null) {</span>
+<span class="fc" id="L277">            throw new IllegalStateException(&quot;The person is not in a building.&quot;);</span>
+        }
+<span class="fc bfc" id="L279" title="All 2 branches covered.">        if (!currentBuilding.getFloors().contains(currentFloor)) {</span>
+<span class="fc" id="L280">            throw new IllegalArgumentException(&quot;The floor is not a floor of the current building.&quot;);</span>
+        }
+<span class="fc" id="L282">        this.currentFloor = currentFloor;</span>
+<span class="fc" id="L283">        return this;</span>
+    }
+
+    /**
+     * The clone method returns a copy of the person.
+     * 
+     * @return A copy of the person.
+     * @see java.lang.Object#clone()
+     */
+    public Person clone() {
+<span class="fc" id="L293">        return new Person(name, weight, currentBuilding, currentFloor, key);</span>
+    }
+
+    /**
+     * The toString method returns a string representation of the person.
+     * 
+     * @return A string representation of the person.
+     * @see java.lang.Object#toString()
+     */
+    public String toString() {
+<span class="fc" id="L303">        return &quot;Person: &quot; + name + &quot; - Weight: &quot; + weight;</span>
+    }
+
+    /**
+     * The disembark function removes the person from the elevator.
+     * @return true if disembarked, false otherwise (would throw exception before return).
+     * @throws IllegalStateException If the person is not in an elevator.
+     * @throws IllegalStateException If the person is not in a building.
+     * @see Elevator
+     */
+    public boolean disembark() throws IllegalStateException {
+<span class="fc bfc" id="L314" title="All 2 branches covered.">        if (currentBuilding == null) {</span>
+<span class="fc" id="L315">            throw new IllegalStateException(&quot;The person is not in a building.&quot;);</span>
+        }
+<span class="fc bfc" id="L317" title="All 2 branches covered.">        if (currentBuilding.getElevator() == null) {</span>
+<span class="fc" id="L318">            throw new IllegalStateException(&quot;The Elevator is not initialized.&quot;);</span>
+        }
+<span class="fc" id="L320">        return currentBuilding.getElevator().disembark(this);</span>
+        
+    }
+
+    /**
+     * The board method tries to board the person in the elevator of the building.
+     * @return true if boarded, false otherwise (would throw exception before return).
+     * @throws IllegalStateException If the person is already in an elevator.
+     * @throws IllegalStateException If the person is not in a building.
+     * @see Elevator
+     */
+    public boolean board() throws IllegalStateException {
+<span class="fc bfc" id="L332" title="All 2 branches covered.">        if (currentBuilding == null) {</span>
+<span class="fc" id="L333">            throw new IllegalStateException(&quot;The person is not in a building.&quot;);</span>
+        }
+<span class="fc bfc" id="L335" title="All 2 branches covered.">        if (currentBuilding.getElevator() == null) {</span>
+<span class="fc" id="L336">            throw new IllegalStateException(&quot;The Elevator is not initialized.&quot;);</span>
+        }
+<span class="fc" id="L338">        return currentBuilding.getElevator().board(this);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

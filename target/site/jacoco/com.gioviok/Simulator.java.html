@@ -1,0 +1,1941 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="it"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Simulator.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">elevator</a> &gt; <a href="index.source.html" class="el_package">com.gioviok</a> &gt; <span class="el_source">Simulator.java</span></div><h1>Simulator.java</h1><pre class="source lang-java linenums">package com.gioviok;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Scanner;
+
+/**
+ * The Simulator class is the main class of the simulator.
+ * It includes all the facade methods to the other classes.
+ * 
+ * @see Building
+ * @see Elevator
+ * @see Floor
+ * @see Key
+ * @see Person
+ */
+<span class="fc" id="L18">public class Simulator {</span>
+    /**
+     * The isDouble method checks if the given string is a double.
+     * 
+     * @param o The object to check.
+     * @return True if the object is a double, false otherwise.
+     */
+    public static boolean isDouble(Object o) {
+        try {
+<span class="nc" id="L27">            Double.parseDouble(o.toString());</span>
+<span class="nc" id="L28">            return true;</span>
+<span class="nc" id="L29">        } catch (NumberFormatException e) {</span>
+<span class="nc" id="L30">            return false;</span>
+        }
+    }
+
+    /**
+     * The internal representation of the building.
+     */
+    private Building building;
+
+    /**
+     * The internal elevator of the building. It is just a reference to the elevator
+     * of the building.
+     * We store it to avoid extra calls to the building.
+     */
+    private Elevator elevator;
+
+    /**
+     * The internal catalog of the people. It is not the same as the people of the
+     * building.
+     * It is used for the prototype design pattern.
+     */
+<span class="fc" id="L51">    private ArrayList&lt;Person&gt; people = new ArrayList&lt;Person&gt;();</span>
+    /**
+     * The internal entryPoint timer
+     */
+<span class="fc" id="L55">    private long entryPoint = 0;</span>
+
+    /**
+     * The internal exitPoint timer
+     */
+<span class="fc" id="L60">    private long exitPoint = 0;</span>
+
+    /**
+     * The enum of editor modes
+     */
+<span class="nc" id="L65">    public enum EditorMode {</span>
+<span class="nc" id="L66">        ADD,</span>
+<span class="nc" id="L67">        EDIT,</span>
+<span class="nc" id="L68">        DELETE,</span>
+<span class="nc" id="L69">        VIEW</span>
+    };
+
+    /**
+     * The ANSI codes for colors and styles.
+     */
+<span class="fc" id="L75">    private static String ANSI_RESET = &quot;\u001B[0m&quot;;</span>
+<span class="fc" id="L76">    private static String ANSI_RED = &quot;\u001B[31m&quot;;</span>
+<span class="fc" id="L77">    private static String ANSI_GREEN = &quot;\u001B[32m&quot;;</span>
+<span class="fc" id="L78">    private static String ANSI_YELLOW = &quot;\u001B[33m&quot;;</span>
+<span class="fc" id="L79">    private static String ANSI_BLUE = &quot;\u001B[34m&quot;;</span>
+<span class="fc" id="L80">    private static String ANSI_PURPLE = &quot;\u001B[35m&quot;;</span>
+<span class="fc" id="L81">    private static String ANSI_CYAN = &quot;\u001B[36m&quot;;</span>
+<span class="fc" id="L82">    private static String ANSI_GRAY = &quot;\u001B[90m&quot;;</span>
+<span class="fc" id="L83">    private static String ANSI_BLINK = &quot;\u001B[5m&quot;;</span>
+    // The ANSI codes for background colors.
+<span class="fc" id="L85">    private static String ANSI_BACKGROUND_GREEN = &quot;\u001B[42m&quot;;</span>
+<span class="fc" id="L86">    private static String ANSI_BACKGROUND_YELLOW = &quot;\u001B[43m&quot;;</span>
+<span class="fc" id="L87">    private static String ANSI_BACKGROUND_CYAN = &quot;\u001B[46m&quot;;</span>
+<span class="fc" id="L88">    private static String ANSI_BACKGROUND_GRAY = &quot;\u001B[100m&quot;;</span>
+<span class="fc" id="L89">    private static String ANSI_BACKGROUND_BROWN = &quot;\u001B[101m&quot;;</span>
+
+    /**
+     * The ansiSwitchOff is used to switch off the ANSI codes, in case they are not
+     * supported by the terminal.
+     */
+    public static void ansiSwitchOff() {
+<span class="nc" id="L96">        Simulator.ANSI_RESET = &quot;&quot;;</span>
+<span class="nc" id="L97">        Simulator.ANSI_RED = &quot;&quot;;</span>
+<span class="nc" id="L98">        Simulator.ANSI_GREEN = &quot;&quot;;</span>
+<span class="nc" id="L99">        Simulator.ANSI_YELLOW = &quot;&quot;;</span>
+<span class="nc" id="L100">        Simulator.ANSI_BLUE = &quot;&quot;;</span>
+<span class="nc" id="L101">        Simulator.ANSI_PURPLE = &quot;&quot;;</span>
+<span class="nc" id="L102">        Simulator.ANSI_CYAN = &quot;&quot;;</span>
+<span class="nc" id="L103">        Simulator.ANSI_BLINK = &quot;&quot;;</span>
+<span class="nc" id="L104">        Simulator.ANSI_GRAY = &quot;&quot;;</span>
+<span class="nc" id="L105">        Simulator.ANSI_BACKGROUND_GREEN = &quot;&quot;;</span>
+<span class="nc" id="L106">        Simulator.ANSI_BACKGROUND_YELLOW = &quot;&quot;;</span>
+<span class="nc" id="L107">        Simulator.ANSI_BACKGROUND_CYAN = &quot;&quot;;</span>
+<span class="nc" id="L108">        Simulator.ANSI_BACKGROUND_GRAY = &quot;&quot;;</span>
+<span class="nc" id="L109">        Simulator.ANSI_BACKGROUND_BROWN = &quot;&quot;;</span>
+<span class="nc" id="L110">    }</span>
+
+    /**
+     * The clear screen method. We use ANSI escape codes to clear the screen.
+     */
+    private static void clearScreen() {
+<span class="fc" id="L116">        System.out.print(ANSI_RESET);</span>
+<span class="fc" id="L117">        System.out.print(&quot;\033[H\033[2J&quot;);</span>
+<span class="fc" id="L118">        System.out.flush();</span>
+<span class="fc" id="L119">    }</span>
+
+    /**
+     * The printEditorHeader function prints the header of the editor.
+     * 
+     * @param mode The mode of the editor.
+     */
+    private static void printEditorHeader(String mode) {
+        // Clear the screen.
+<span class="nc" id="L128">        clearScreen();</span>
+        // Print the header.
+<span class="nc" id="L130">        System.out.println(ANSI_BLUE + &quot;== &quot; + mode + &quot; editor ==&quot;);</span>
+<span class="nc" id="L131">    }</span>
+
+    /**
+     * The startTimer method. We use System.currentTimeMillis() to get the current
+     * time and store it in the entryPoint variable.
+     * 
+     * @throws IllegalStateException if the timer is already started.
+     */
+    private void startTimer() throws IllegalStateException {
+<span class="pc bpc" id="L140" title="1 of 2 branches missed.">        if (entryPoint != 0) {</span>
+<span class="nc" id="L141">            throw new IllegalStateException(&quot;Timer already started&quot;);</span>
+        }
+<span class="fc" id="L143">        entryPoint = System.currentTimeMillis();</span>
+<span class="fc" id="L144">    }</span>
+
+    /**
+     * The stopTimer method. We use System.currentTimeMillis() to get the current
+     * time and store it in the exitPoint variable.
+     * We return the time difference between the entryPoint and the exitPoint.
+     * We then reset the entryPoint to 0.
+     * 
+     * @return the time difference between the entryPoint and the exitPoint.
+     * @throws IllegalStateException if the timer is not started.
+     */
+    private long stopTimer() throws IllegalStateException {
+<span class="pc bpc" id="L156" title="1 of 2 branches missed.">        if (entryPoint == 0) {</span>
+<span class="nc" id="L157">            throw new IllegalStateException(&quot;Timer not started&quot;);</span>
+        }
+<span class="fc" id="L159">        exitPoint = System.currentTimeMillis();</span>
+<span class="fc" id="L160">        long time = exitPoint - entryPoint;</span>
+<span class="fc" id="L161">        entryPoint = 0;</span>
+<span class="fc" id="L162">        return time;</span>
+    }
+
+    /**
+     * The nameBuilding method is the facade method to change the name of the
+     * building.
+     * 
+     * @param name The new name of the building.
+     *             return this to allow chaining.
+     * @throws IllegalArgumentException if the name is null.
+     */
+    public Simulator nameBuilding(String name) throws IllegalArgumentException {
+<span class="pc bpc" id="L174" title="1 of 2 branches missed.">        if (name == null) {</span>
+<span class="nc" id="L175">            throw new IllegalArgumentException(&quot;Name cannot be null&quot;);</span>
+        }
+<span class="fc" id="L177">        building.setName(name);</span>
+<span class="fc" id="L178">        return this;</span>
+    }
+
+    /**
+     * The getBuilding method is the facade method to get the building.
+     * 
+     * @return The building.
+     * @see Building
+     */
+    public Building getBuilding() {
+<span class="fc" id="L188">        return building;</span>
+    }
+
+    /**
+     * The addNewFloor method is the facade method to add a new floor to the
+     * building.
+     * 
+     * @param floor   The new floor name to add.
+     * @param keyCode The key code of the floor.
+     * @param height  The height of the floor.
+     * @return this to allow chaining.
+     * @throws IllegalArgumentException if the floor name is null.
+     */
+    public Simulator addNewFloor(String floor, int keyCode, int height) throws IllegalArgumentException {
+<span class="pc bpc" id="L202" title="1 of 2 branches missed.">        if (floor == null) {</span>
+<span class="nc" id="L203">            throw new IllegalArgumentException(&quot;Floor name cannot be null&quot;);</span>
+        }
+<span class="fc" id="L205">        building.addFloor(new Floor(floor, keyCode, height));</span>
+<span class="fc" id="L206">        return this;</span>
+    }
+
+    /**
+     * The init method initializes the simulator's building.
+     * 
+     * @param verbose
+     * @return this to allow chaining.
+     */
+    public Simulator init(boolean verbose) {
+        // Start the timer.
+<span class="fc" id="L217">        startTimer();</span>
+        // Clear the screen.
+<span class="fc" id="L219">        clearScreen();</span>
+        // We initialize the simulation.
+<span class="fc" id="L221">        building = new Building();</span>
+<span class="fc" id="L222">        elevator = building.getElevator();</span>
+        // Finished. Print the time if verbose is true.
+<span class="pc bpc" id="L224" title="1 of 2 branches missed.">        if (verbose)</span>
+<span class="nc" id="L225">            System.out.println(ANSI_GREEN + &quot;Done!: (&quot; + stopTimer() + &quot; ms)&quot; + ANSI_RESET);</span>
+        else {
+            // We should still stop the timer, but we don't print the time.
+<span class="fc" id="L228">            stopTimer();</span>
+        }
+<span class="fc" id="L230">        return this;</span>
+    }
+
+    /**
+     * The start method. It initializes building and elevator. Defaults to verbose =
+     * false.
+     * 
+     * @return this to allow chaining.
+     */
+    public Simulator init() {
+<span class="fc" id="L240">        return init(false);</span>
+    }
+
+    /**
+     * The main loop of the simulator's GUI.
+     */
+    public void guiLoop() {
+        // Init scanner.
+<span class="nc" id="L248">        Scanner scanner = new Scanner(System.in);</span>
+<span class="nc" id="L249">        while (true) {</span>
+            // print the menu.
+<span class="nc" id="L251">            printHelpMenu();</span>
+            // We take the input.
+<span class="nc" id="L253">            String input = scanner.nextLine();</span>
+<span class="nc" id="L254">            boolean ok = false;</span>
+            // Start the timer.
+<span class="nc" id="L256">            startTimer();</span>
+            // We check the input.
+<span class="nc bnc" id="L258" title="All 12 branches missed.">            switch (input) {</span>
+                case &quot;0&quot;:
+                    // Quick view
+<span class="nc" id="L261">                    ok = quickView();</span>
+<span class="nc" id="L262">                    break;</span>
+                case &quot;1&quot;:
+                    // Open the building editor.
+<span class="nc" id="L265">                    ok = buildingEditor();</span>
+<span class="nc" id="L266">                    break;</span>
+                case &quot;2&quot;:
+                    // Open the floor editor.
+<span class="nc" id="L269">                    ok = floorEditor();</span>
+<span class="nc" id="L270">                    break;</span>
+                case &quot;3&quot;:
+                    // Open the elevator editor.
+<span class="nc" id="L273">                    ok = elevatorEditor();</span>
+<span class="nc" id="L274">                    break;</span>
+                case &quot;4&quot;:
+                    // Open the key editor.
+<span class="nc" id="L277">                    ok = keyEditor();</span>
+<span class="nc" id="L278">                    break;</span>
+                case &quot;5&quot;:
+                    // Open the person catalog.
+<span class="nc" id="L281">                    printPersonCatalog();</span>
+<span class="nc" id="L282">                    break;</span>
+                case &quot;6&quot;:
+                    // Open the person editor.
+<span class="nc" id="L285">                    ok = personEditor();</span>
+<span class="nc" id="L286">                    break;</span>
+                case &quot;7&quot;:
+                    // Print the simulation status.
+<span class="nc" id="L289">                    ok = simulationStatus();</span>
+<span class="nc" id="L290">                    break;</span>
+                case &quot;8&quot;:
+                    // Run elevator step.
+                    try {
+<span class="nc" id="L294">                        ok = building.getElevator().run();</span>
+<span class="nc" id="L295">                    } catch (Exception e) {</span>
+<span class="nc" id="L296">                        System.out.println(ANSI_RED + &quot;Error: &quot; + e.getMessage() + ANSI_RESET);</span>
+<span class="nc" id="L297">                        ok = false;</span>
+<span class="nc" id="L298">                        break;</span>
+                    }
+                    break;
+                case &quot;9&quot;:
+                    // Open the action editor.
+<span class="nc" id="L303">                    ok = actionEditor();</span>
+<span class="nc" id="L304">                    break;</span>
+                case &quot;10&quot;:
+                    // Quit the simulator.
+<span class="nc" id="L307">                    scanner.close();</span>
+<span class="nc" id="L308">                    System.exit(0);</span>
+                default:
+                    // Clear the screen.
+<span class="nc" id="L311">                    clearScreen();</span>
+                    // Print menu
+<span class="nc" id="L313">                    printHelpMenu();</span>
+                    // Invalid input.
+<span class="nc" id="L315">                    System.out.println(ANSI_RED + &quot;Invalid input.&quot; + ANSI_RESET);</span>
+                    break;
+            }
+            // If valid input, we print success.
+<span class="nc bnc" id="L319" title="All 2 branches missed.">            if (ok) {</span>
+<span class="nc" id="L320">                System.out.println(ANSI_GREEN + &quot;Done! (&quot; + stopTimer() + &quot; ms)&quot; + ANSI_RESET);</span>
+<span class="nc" id="L321">            }</span>
+            // If invalid input, we still have to stop the timer.
+            else {
+<span class="nc" id="L324">                stopTimer();</span>
+            }
+            // Wait for the user to press enter.
+<span class="nc" id="L327">            scanner.nextLine();</span>
+        }
+    }
+
+    /**
+     * The quick view method prints the current status of the building.
+     * 
+     * @return true if the operation was successful.
+     */
+    private boolean quickView() {
+        // Open scanner
+<span class="nc" id="L338">        Scanner scanner = new Scanner(System.in);</span>
+<span class="nc" id="L339">        boolean invalidInput = false;</span>
+        do {
+            // Print header
+<span class="nc" id="L342">            System.out.println(ANSI_BLUE + &quot;== Quick view ==&quot; + ANSI_RESET);</span>
+            // Print infos about the building.
+<span class="nc" id="L344">            System.out.println(ANSI_BLUE + &quot;Building name:      &quot; + ANSI_PURPLE + building.getName() + ANSI_RESET);</span>
+<span class="nc" id="L345">            System.out.println(</span>
+<span class="nc" id="L346">                    ANSI_BLUE + &quot;Number of floors:   &quot; + ANSI_PURPLE + building.getFloors().size() + ANSI_RESET);</span>
+<span class="nc" id="L347">            System.out.println(ANSI_BLUE + &quot;Elevator status:    &quot; + ANSI_PURPLE</span>
+<span class="nc bnc" id="L348" title="All 2 branches missed.">                    + (elevator.getCurrentFloor() != null ? &quot;valid&quot; : &quot;invalid&quot;) + ANSI_RESET);</span>
+<span class="nc" id="L349">            System.out.println(ANSI_BLUE + &quot;Elevator position:  &quot; + ANSI_PURPLE</span>
+<span class="nc bnc" id="L350" title="All 2 branches missed.">                    + (elevator.getCurrentFloor() != null ? elevator.getCurrentFloor().getName() : &quot;invalid&quot;)</span>
+<span class="nc" id="L351">                    + ANSI_RESET);</span>
+<span class="nc" id="L352">            System.out.println(ANSI_BLUE + &quot;Elevator direction: &quot; + ANSI_PURPLE</span>
+<span class="nc bnc" id="L353" title="All 2 branches missed.">                    + (elevator.getCurrentMovingDirection() != null ? elevator.getCurrentMovingDirection().toString()</span>
+<span class="nc" id="L354">                            : &quot;invalid&quot;)</span>
+<span class="nc" id="L355">                    + ANSI_RESET);</span>
+<span class="nc" id="L356">            System.out.println(</span>
+<span class="nc" id="L357">                    ANSI_BLUE + &quot;Number of people:   &quot; + ANSI_PURPLE + building.getPersons().size() + ANSI_RESET);</span>
+<span class="nc" id="L358">            System.out</span>
+<span class="nc" id="L359">                    .println(ANSI_BLUE + &quot;Number of roles:    &quot; + ANSI_PURPLE + building.getKeys().size() + ANSI_RESET);</span>
+            // Ask the user if he wants the graphical view.
+<span class="nc bnc" id="L361" title="All 2 branches missed.">            System.out.println((invalidInput ? ANSI_RED + &quot;Invalid input, please try again: &quot; : ANSI_BLUE)</span>
+<span class="nc" id="L362">                    + &quot;Do you want to see the graphical view? (y/n)&quot; + ANSI_RESET);</span>
+            // Get the input.
+<span class="nc" id="L364">            String input = scanner.nextLine();</span>
+            // If input is no, we return.
+<span class="nc bnc" id="L366" title="All 2 branches missed.">            if (input.equalsIgnoreCase(&quot;n&quot;)) {</span>
+<span class="nc" id="L367">                return true;</span>
+            }
+            // If input is yes, we print the graphical view.
+<span class="nc bnc" id="L370" title="All 2 branches missed.">            else if (input.equalsIgnoreCase(&quot;y&quot;)) {</span>
+                // Clear the screen.
+<span class="nc" id="L372">                clearScreen();</span>
+                // If ansi was disabled, print a warning
+<span class="nc bnc" id="L374" title="All 2 branches missed.">                if (ANSI_BLUE == &quot;&quot;) {</span>
+<span class="nc" id="L375">                    System.out.println(&quot;Warning: ANSI is disabled. The graphical view will not be displayed.&quot;); // No</span>
+                                                                                                                // point
+                                                                                                                // printing
+                                                                                                                // ansi
+                                                                                                                // colors
+                                                                                                                // in
+                                                                                                                // this
+                                                                                                                // message.
+<span class="nc" id="L383">                } else {</span>
+                    // Print the graphical view.
+<span class="nc" id="L385">                    printGraphicalView();</span>
+                }
+                // We return.
+<span class="nc" id="L388">                return true;</span>
+            }
+            // Else, the input is invalid
+            else
+<span class="nc" id="L392">                invalidInput = true;</span>
+
+<span class="nc" id="L394">        } while (true);</span>
+    }
+
+    /**
+     * The printGraphicalView method prints the graphical view of the building.
+     * 
+     * @note It is still a command line view. It is not intended to be anything
+     *       fancy.
+     */
+    private void printGraphicalView() {
+        // First, we setup some variables.
+        // We also account for the X people lenght text, since it may be longer than
+        // floor names.
+<span class="nc" id="L407">        int largestFloorNameLength = 0;</span>
+        // Start printing the floors. We sort them in order of distance, from highest to
+        // lowest.
+<span class="nc" id="L410">        ArrayList&lt;Floor&gt; floors = new ArrayList&lt;Floor&gt;(building.getFloors());</span>
+<span class="nc" id="L411">        Collections.sort(floors, new Comparator&lt;Floor&gt;() {</span>
+            @Override
+            public int compare(Floor o1, Floor o2) {
+<span class="nc" id="L414">                return o2.getDistance() - o1.getDistance();</span>
+            }
+        });
+<span class="nc" id="L417">        ArrayList&lt;Integer&gt; floorPeopleCount = new ArrayList&lt;Integer&gt;();</span>
+<span class="nc bnc" id="L418" title="All 2 branches missed.">        for (Floor floor : floors) {</span>
+            // Compare the floor name length to the largest one.
+<span class="nc bnc" id="L420" title="All 2 branches missed.">            if (floor.getName().length() &gt; largestFloorNameLength) {</span>
+<span class="nc" id="L421">                largestFloorNameLength = floor.getName().length();</span>
+            }
+            // Count people on the floor.
+<span class="nc" id="L424">            int count = 0;</span>
+<span class="nc bnc" id="L425" title="All 2 branches missed.">            for (Person person : building.getPersons()) {</span>
+<span class="nc bnc" id="L426" title="All 2 branches missed.">                if (person.getCurrentFloor() == floor) {</span>
+<span class="nc" id="L427">                    count++;</span>
+                }
+            }
+            // The text X people is long log10(count) + 7
+<span class="nc" id="L431">            int peopleLength = (int) (Math.log10(count) + 7);</span>
+<span class="nc bnc" id="L432" title="All 2 branches missed.">            if (peopleLength &gt; largestFloorNameLength) {</span>
+<span class="nc" id="L433">                largestFloorNameLength = peopleLength;</span>
+            }
+<span class="nc" id="L435">            floorPeopleCount.add(count);</span>
+        }
+
+        // Print the building name.
+<span class="nc" id="L439">        System.out.println(ANSI_BLUE + building.getName() + ANSI_RESET);</span>
+<span class="nc bnc" id="L440" title="All 2 branches missed.">        for (int j = 0; j &lt; floors.size(); j++) {</span>
+<span class="nc" id="L441">            Floor floor = floors.get(j);</span>
+<span class="nc bnc" id="L442" title="All 4 branches missed.">            for (int i = 0; i &lt; 5 + (j == (floors.size() - 1) ? 1 : 0); i++) { // To print the base</span>
+                // Print background.
+<span class="nc bnc" id="L444" title="All 2 branches missed.">                System.out.print((floor.getDistance() &gt;= 0 ? ANSI_BACKGROUND_CYAN : ANSI_BACKGROUND_BROWN) + &quot;   &quot;);</span>
+                // Switch on the floor line.
+<span class="nc bnc" id="L446" title="All 5 branches missed.">                switch (i) {</span>
+                    case 0:
+                    case 5:
+                        // Print a gray line long longestFloorName + 8
+<span class="nc" id="L450">                        System.out.print(ANSI_BACKGROUND_GRAY</span>
+<span class="nc" id="L451">                                + new String(new char[largestFloorNameLength + 8]).replace(&quot;\0&quot;, &quot; &quot;) + ANSI_RESET); // Neat</span>
+                                                                                                                     // little
+                                                                                                                     // trick
+                                                                                                                     // to
+                                                                                                                     // print
+                                                                                                                     // a
+                                                                                                                     // string
+                                                                                                                     // of
+                                                                                                                     // spaces.
+                                                                                                                     // :)
+<span class="nc" id="L461">                        break;</span>
+                    case 1:
+                    case 4:
+                        // Print wall
+<span class="nc" id="L465">                        System.out.print(ANSI_BACKGROUND_GRAY + &quot; &quot; + ANSI_RESET);</span>
+                        // If elevator is on this floor, print the elevator.
+<span class="nc bnc" id="L467" title="All 2 branches missed.">                        System.out.print((elevator.getCurrentFloor() == floor ? ANSI_BACKGROUND_YELLOW : ANSI_RESET)</span>
+<span class="nc" id="L468">                                + &quot;   &quot; + ANSI_RESET);</span>
+                        // Print long enough space
+<span class="nc" id="L470">                        System.out.print(</span>
+<span class="nc" id="L471">                                new String(new char[largestFloorNameLength + 3]).replace(&quot;\0&quot;, &quot; &quot;) + ANSI_RESET);</span>
+                        // Print wall
+<span class="nc" id="L473">                        System.out.print(</span>
+<span class="nc bnc" id="L474" title="All 2 branches missed.">                                (floor == building.getEntranceFloor() ? ANSI_BACKGROUND_GREEN : ANSI_BACKGROUND_GRAY)</span>
+<span class="nc" id="L475">                                        + &quot; &quot; + ANSI_RESET);</span>
+<span class="nc" id="L476">                        break;</span>
+                    case 2:
+                        // Print wall
+<span class="nc" id="L479">                        System.out.print(ANSI_BACKGROUND_GRAY + &quot; &quot; + ANSI_RESET);</span>
+                        // If elevator is on this floor, print the elevator.
+<span class="nc bnc" id="L481" title="All 2 branches missed.">                        System.out.print((elevator.getCurrentFloor() == floor ? ANSI_BACKGROUND_YELLOW : ANSI_RESET)</span>
+<span class="nc" id="L482">                                + &quot;   &quot; + ANSI_RESET);</span>
+                        // Print space
+<span class="nc" id="L484">                        System.out.print(&quot; &quot;);</span>
+                        // Initialize the string to print.
+<span class="nc" id="L486">                        StringBuilder stringToPrint = new StringBuilder();</span>
+                        // We calculate how many whitespaces we need to print.
+<span class="nc" id="L488">                        int whitespaces = largestFloorNameLength + 2 - floor.getName().length();</span>
+                        // We will approximate by defect on the left, by excess on the right.
+<span class="nc bnc" id="L490" title="All 2 branches missed.">                        for (int left = 0; left &lt; whitespaces / 2; left++)</span>
+<span class="nc" id="L491">                            stringToPrint.append(&quot; &quot;);</span>
+<span class="nc" id="L492">                        stringToPrint.append(floor.getName());</span>
+<span class="nc bnc" id="L493" title="All 2 branches missed.">                        for (int right = 0; right &lt; whitespaces - whitespaces / 2; right++)</span>
+<span class="nc" id="L494">                            stringToPrint.append(&quot; &quot;);</span>
+                        // Print the string.
+<span class="nc" id="L496">                        System.out.print(stringToPrint.toString());</span>
+                        // Print wall
+<span class="nc" id="L498">                        System.out.print(</span>
+<span class="nc bnc" id="L499" title="All 2 branches missed.">                                (floor == building.getEntranceFloor() ? ANSI_BACKGROUND_GREEN : ANSI_BACKGROUND_GRAY)</span>
+<span class="nc" id="L500">                                        + &quot; &quot; + ANSI_RESET);</span>
+<span class="nc" id="L501">                        break;</span>
+                    case 3:
+                        // Print wall
+<span class="nc" id="L504">                        System.out.print(ANSI_BACKGROUND_GRAY + &quot; &quot; + ANSI_RESET);</span>
+                        // If elevator is on this floor, print the elevator.
+<span class="nc bnc" id="L506" title="All 2 branches missed.">                        if (elevator.getCurrentFloor() == floor) {</span>
+                            // Init string to print
+<span class="nc" id="L508">                            String stringToPrint2 = Integer.toString(elevator.numberOfPeople());</span>
+                            // Initialize the string builder.
+<span class="nc" id="L510">                            StringBuilder stringBuilder = new StringBuilder();</span>
+                            // We calculate how many whitespaces we need to print. // We assume that the
+                            // number of people is always less than 1000.
+<span class="nc" id="L513">                            int whitespaces2 = 3 - stringToPrint2.length();</span>
+                            // We will approximate by defect on the left, by excess on the right.
+<span class="nc bnc" id="L515" title="All 2 branches missed.">                            for (int left = 0; left &lt; whitespaces2 / 2; left++)</span>
+<span class="nc" id="L516">                                stringBuilder.append(&quot; &quot;);</span>
+<span class="nc" id="L517">                            stringBuilder.append(stringToPrint2);</span>
+<span class="nc bnc" id="L518" title="All 2 branches missed.">                            for (int right = 0; right &lt; whitespaces2 - whitespaces2 / 2; right++)</span>
+<span class="nc" id="L519">                                stringBuilder.append(&quot; &quot;);</span>
+                            // Print the string.
+<span class="nc" id="L521">                            System.out.print(ANSI_BACKGROUND_YELLOW + stringBuilder.toString() + ANSI_RESET);</span>
+
+<span class="nc" id="L523">                        } else {</span>
+<span class="nc" id="L524">                            System.out.print(ANSI_RESET + &quot;   &quot; + ANSI_RESET);</span>
+                        }
+                        // Print space
+<span class="nc" id="L527">                        System.out.print(&quot; &quot;);</span>
+                        // Init string to print.
+<span class="nc" id="L529">                        String text = floorPeopleCount.get(j)</span>
+<span class="nc bnc" id="L530" title="All 2 branches missed.">                                - (elevator.getCurrentFloor() == floor ? elevator.numberOfPeople() : 0) + &quot; people&quot;;</span>
+                        // Init stringBuilder to print.
+<span class="nc" id="L532">                        StringBuilder stringBuilder = new StringBuilder();</span>
+                        // We calculate how many whitespaces we need to print.
+<span class="nc" id="L534">                        int whitespaces2 = largestFloorNameLength + 2 - text.length();</span>
+                        // We will approximate by defect on the left, by excess on the right.
+<span class="nc bnc" id="L536" title="All 2 branches missed.">                        for (int left = 0; left &lt; whitespaces2 / 2; left++)</span>
+<span class="nc" id="L537">                            stringBuilder.append(&quot; &quot;);</span>
+<span class="nc" id="L538">                        stringBuilder.append(text);</span>
+<span class="nc bnc" id="L539" title="All 2 branches missed.">                        for (int right = 0; right &lt; whitespaces2 - whitespaces2 / 2; right++)</span>
+<span class="nc" id="L540">                            stringBuilder.append(&quot; &quot;);</span>
+                        // Print the string.
+<span class="nc" id="L542">                        System.out.print(stringBuilder.toString());</span>
+                        // Print wall
+<span class="nc" id="L544">                        System.out.print(</span>
+<span class="nc bnc" id="L545" title="All 2 branches missed.">                                (floor == building.getEntranceFloor() ? ANSI_BACKGROUND_GREEN : ANSI_BACKGROUND_GRAY)</span>
+<span class="nc" id="L546">                                        + &quot; &quot; + ANSI_RESET);</span>
+                }
+                // Print background and newline.
+<span class="nc" id="L549">                System.out.println(</span>
+<span class="nc bnc" id="L550" title="All 2 branches missed.">                        (floor.getDistance() &gt;= 0 ? ANSI_BACKGROUND_CYAN : ANSI_BACKGROUND_BROWN) + &quot;   &quot; + ANSI_RESET);</span>
+            }
+        }
+<span class="nc" id="L553">    }</span>
+
+    private boolean actionEditor() {
+        // Init scanner, cursor and action variable
+<span class="nc" id="L557">        Scanner scanner = new Scanner(System.in);</span>
+<span class="nc" id="L558">        int cursor = 0;</span>
+<span class="nc" id="L559">        boolean invalidInput = false;</span>
+        // Loop until we get a valid input.
+<span class="nc" id="L561">        while (true) {</span>
+            // Print the header.
+<span class="nc" id="L563">            printEditorHeader(&quot;Action editor&quot;);</span>
+            // Print the menu.
+<span class="nc" id="L565">            System.out.println(ANSI_GREEN + &quot;1. Register Person from catalog.&quot; + ANSI_RESET);</span>
+<span class="nc" id="L566">            System.out.println(ANSI_YELLOW + &quot;2. Execute person action.&quot; + ANSI_RESET);</span>
+<span class="nc" id="L567">            System.out.println(ANSI_RED + &quot;3. Remove key from person.&quot; + ANSI_RESET);</span>
+<span class="nc" id="L568">            System.out.println(ANSI_RED + &quot;4. Remove person from building.&quot; + ANSI_RESET);</span>
+<span class="nc" id="L569">            System.out.println(ANSI_CYAN + &quot;5. Back&quot; + ANSI_RESET);</span>
+<span class="nc" id="L570">            System.out</span>
+<span class="nc bnc" id="L571" title="All 2 branches missed.">                    .print((invalidInput ? ANSI_RED + &quot;Invalid input. Try again: &quot; : ANSI_BLUE + &quot;Enter your choice: &quot;)</span>
+<span class="nc" id="L572">                            + ANSI_RESET);</span>
+            // Take the input.
+<span class="nc" id="L574">            String input = scanner.nextLine();</span>
+            // Input must be 0-5.
+<span class="nc bnc" id="L576" title="All 2 branches missed.">            if (!input.matches(&quot;[0-5]&quot;)) {</span>
+<span class="nc" id="L577">                invalidInput = true;</span>
+<span class="nc" id="L578">                continue;</span>
+            }
+            // We set the cursor to the input.
+<span class="nc" id="L581">            cursor = Integer.parseInt(input);</span>
+            // Reset invalid input
+<span class="nc" id="L583">            invalidInput = false;</span>
+            // Depending on the cursor, we will display the corresponding menu.
+<span class="nc bnc" id="L585" title="All 6 branches missed.">            switch (cursor) {</span>
+                case 1:
+                    while (true) {
+                        // Print the header.
+<span class="nc" id="L589">                        printEditorHeader(&quot;Action editor&quot;);</span>
+                        // Here, we print a list of people in the catalogue. Then we ask the user to
+                        // choose one, which will be added.
+<span class="nc" id="L592">                        int i = 0;</span>
+<span class="nc bnc" id="L593" title="All 2 branches missed.">                        for (; i &lt; people.size(); i++) {</span>
+<span class="nc" id="L594">                            System.out.println(ANSI_GREEN + (i) + &quot;. &quot; + people.get(i).getName() + ANSI_RESET);</span>
+                        }
+<span class="nc" id="L596">                        System.out.println(ANSI_RED + (i) + &quot;. Back&quot; + ANSI_RESET);</span>
+<span class="nc" id="L597">                        System.out.print(</span>
+<span class="nc bnc" id="L598" title="All 2 branches missed.">                                (invalidInput ? ANSI_RED + &quot;Invalid input. Try again: &quot; : ANSI_BLUE + &quot;Select person: &quot;)</span>
+<span class="nc" id="L599">                                        + ANSI_RESET);</span>
+                        // Take the input.
+<span class="nc" id="L601">                        input = scanner.nextLine();</span>
+                        // Input must be an integer.
+<span class="nc bnc" id="L603" title="All 2 branches missed.">                        if (!input.matches(&quot;[0-9]+&quot;)) {</span>
+<span class="nc" id="L604">                            invalidInput = true;</span>
+<span class="nc" id="L605">                            continue;</span>
+                        }
+                        // Parse the input.
+<span class="nc" id="L608">                        int personIndex = Integer.parseInt(input);</span>
+                        // Person index must be in the range of the catalogue.
+<span class="nc bnc" id="L610" title="All 2 branches missed.">                        if (personIndex == people.size()) {</span>
+<span class="nc" id="L611">                            break;</span>
+                        }
+<span class="nc bnc" id="L613" title="All 2 branches missed.">                        if (personIndex &gt; people.size()) {</span>
+<span class="nc" id="L614">                            invalidInput = true;</span>
+<span class="nc" id="L615">                            continue;</span>
+                        }
+<span class="nc" id="L617">                        Key key = null;</span>
+                        // Loop to get the key.
+                        while (true) {
+                            // Print the header.
+<span class="nc" id="L621">                            printEditorHeader(&quot;Action editor&quot;);</span>
+                            // Here, we print a list of keys in the catalogue. Then we ask the user to
+                            // choose one, which will be added.
+
+<span class="nc" id="L625">                            System.out.println(ANSI_GREEN + &quot;0. No key.&quot; + ANSI_RESET);</span>
+<span class="nc bnc" id="L626" title="All 2 branches missed.">                            for (int j = 0; j &lt; building.getKeys().size(); j++) {</span>
+<span class="nc" id="L627">                                System.out.println(</span>
+<span class="nc" id="L628">                                        ANSI_GREEN + (j + 1) + &quot;. &quot; + building.getKeys().get(j).getName() + ANSI_RESET);</span>
+                            }
+<span class="nc" id="L630">                            System.out.println(ANSI_RED + (building.getKeys().size() + 1) + &quot;. Back&quot; + ANSI_RESET);</span>
+<span class="nc bnc" id="L631" title="All 2 branches missed.">                            System.out.print((invalidInput ? ANSI_RED + &quot;Invalid input. Try again: &quot;</span>
+<span class="nc" id="L632">                                    : ANSI_BLUE + &quot;Select key to give: &quot;) + ANSI_RESET);</span>
+                            // Take the input.
+<span class="nc" id="L634">                            input = scanner.nextLine();</span>
+                            // Input must be an integer.
+<span class="nc bnc" id="L636" title="All 2 branches missed.">                            if (!input.matches(&quot;[0-9]+&quot;)) {</span>
+<span class="nc" id="L637">                                invalidInput = true;</span>
+<span class="nc" id="L638">                                continue;</span>
+                            }
+                            // Parse the input.
+<span class="nc" id="L641">                            int keyIndex = Integer.parseInt(input);</span>
+                            // Key index must be in the range of the catalogue.
+<span class="nc bnc" id="L643" title="All 2 branches missed.">                            if (keyIndex == building.getKeys().size() + 1) {</span>
+<span class="nc" id="L644">                                cursor = -1; // To signal not to register the person</span>
+<span class="nc" id="L645">                                break;</span>
+                            }
+<span class="nc bnc" id="L647" title="All 2 branches missed.">                            if (keyIndex != 0) {</span>
+                                // Key index must be in the range of the catalogue.
+<span class="nc bnc" id="L649" title="All 2 branches missed.">                                if (keyIndex &gt; building.getKeys().size()) {</span>
+<span class="nc" id="L650">                                    invalidInput = true;</span>
+<span class="nc" id="L651">                                    continue;</span>
+                                }
+<span class="nc" id="L653">                                key = building.getKeys().get(keyIndex - 1).clone();</span>
+                            }
+                            break;
+                        }
+                        // We register the person to the building.
+                        try {
+<span class="nc bnc" id="L659" title="All 2 branches missed.">                            if (cursor != -1)</span>
+<span class="nc" id="L660">                                building.registerPerson(people.get(personIndex).clone(),</span>
+<span class="nc bnc" id="L661" title="All 2 branches missed.">                                        (key == null ? null : key.getName()));</span>
+<span class="nc" id="L662">                        } catch (IllegalStateException e) {</span>
+                            // Print the header.
+<span class="nc" id="L664">                            printEditorHeader(&quot;Action editor&quot;);</span>
+<span class="nc" id="L665">                            System.out.println(ANSI_RED + &quot;Error: &quot; + e.getMessage() + ANSI_RESET);</span>
+                            // We wait for the user to press enter.
+<span class="nc" id="L667">                            scanner.nextLine();</span>
+<span class="nc" id="L668">                            cursor = -1; // To return to action editor.</span>
+                            break;
+                        }
+                        break;
+                    }
+<span class="nc" id="L673">                    cursor = -1; // To return to action editor.</span>
+<span class="nc" id="L674">                    break;</span>
+                case 2:
+                    // Execute person action.
+<span class="nc" id="L677">                    while (true) {</span>
+                        // Print the header.
+<span class="nc" id="L679">                        printEditorHeader(&quot;Action editor&quot;);</span>
+                        // Here, we print a list of people in the building.
+<span class="nc" id="L681">                        int i = 0;</span>
+<span class="nc bnc" id="L682" title="All 2 branches missed.">                        for (; i &lt; building.getPersons().size(); i++) {</span>
+<span class="nc" id="L683">                            System.out.println(</span>
+<span class="nc" id="L684">                                    ANSI_GREEN + (i) + &quot;. &quot; + building.getPersons().get(i).getName() + ANSI_RESET);</span>
+                        }
+<span class="nc" id="L686">                        System.out.println(ANSI_RED + (i) + &quot;. Back&quot; + ANSI_RESET);</span>
+<span class="nc" id="L687">                        System.out.print(</span>
+<span class="nc bnc" id="L688" title="All 2 branches missed.">                                (invalidInput ? ANSI_RED + &quot;Invalid input. Try again: &quot; : ANSI_BLUE + &quot;Select person: &quot;)</span>
+<span class="nc" id="L689">                                        + ANSI_RESET);</span>
+                        // Take the input.
+<span class="nc" id="L691">                        input = scanner.nextLine();</span>
+                        // Input must be an integer.
+<span class="nc bnc" id="L693" title="All 2 branches missed.">                        if (!input.matches(&quot;[0-9]+&quot;)) {</span>
+<span class="nc" id="L694">                            invalidInput = true;</span>
+<span class="nc" id="L695">                            continue;</span>
+                        }
+                        // Parse the input.
+<span class="nc" id="L698">                        int personIndex = Integer.parseInt(input);</span>
+                        // Person index must be in the range of the catalogue.
+<span class="nc bnc" id="L700" title="All 2 branches missed.">                        if (personIndex == building.getPersons().size()) {</span>
+<span class="nc" id="L701">                            break;</span>
+                        }
+<span class="nc bnc" id="L703" title="All 2 branches missed.">                        if (personIndex &gt; building.getPersons().size()) {</span>
+<span class="nc" id="L704">                            invalidInput = true;</span>
+<span class="nc" id="L705">                            continue;</span>
+                        }
+<span class="nc" id="L707">                        Person person = building.getPersons().get(personIndex);</span>
+                        // Loop to get action
+<span class="nc" id="L709">                        boolean breakOut = false;</span>
+                        while (true) {
+                            // Print the header.
+<span class="nc" id="L712">                            printEditorHeader(&quot;Action editor&quot;);</span>
+                            // Here, we print a list of actions. Then we ask the user what to do. Note that
+                            // some actions are only available for certain people,
+                            // depending on the status of the person.
+                            // The call elevator ride is only available for people who are in the elevator.
+                            // The same goes for the board elevator.
+<span class="nc" id="L718">                            boolean isInElevator = building.getElevator().hasPerson(person);</span>
+<span class="nc" id="L719">                            System.out.println(ANSI_BLUE + &quot;Person &quot; + ANSI_YELLOW + person.getName() + ANSI_BLUE</span>
+<span class="nc bnc" id="L720" title="All 2 branches missed.">                                    + &quot; is &quot; + (isInElevator ? &quot;&quot; : &quot;not &quot;) + &quot;in the elevator.&quot; + ANSI_RESET);</span>
+<span class="nc" id="L721">                            System.out.println(ANSI_BLUE + &quot;Currently, it is on &quot; + ANSI_PURPLE</span>
+<span class="nc" id="L722">                                    + person.getCurrentFloor().getName() + ANSI_BLUE + &quot; floor.&quot; + ANSI_RESET);</span>
+<span class="nc" id="L723">                            System.out.println(ANSI_BLUE + &quot;What should &quot; + ANSI_YELLOW + person.getName() + ANSI_BLUE</span>
+<span class="nc" id="L724">                                    + &quot; do?&quot; + ANSI_RESET);</span>
+<span class="nc" id="L725">                            System.out.println(</span>
+<span class="nc bnc" id="L726" title="All 2 branches missed.">                                    (isInElevator ? ANSI_GRAY : ANSI_GREEN) + &quot;0. Call elevator ride.&quot; + ANSI_RESET</span>
+<span class="nc" id="L727">                                            + &quot;\n&quot; +</span>
+<span class="nc bnc" id="L728" title="All 2 branches missed.">                                            (isInElevator ? ANSI_GRAY : ANSI_GREEN) + &quot;1. Board elevator.&quot; + ANSI_RESET</span>
+<span class="nc" id="L729">                                            + &quot;\n&quot; +</span>
+<span class="nc bnc" id="L730" title="All 2 branches missed.">                                            (isInElevator ? ANSI_GREEN : ANSI_GRAY) + &quot;2. Leave elevator.&quot; + ANSI_RESET</span>
+<span class="nc" id="L731">                                            + &quot;\n&quot; +</span>
+<span class="nc bnc" id="L732" title="All 2 branches missed.">                                            (isInElevator ? ANSI_GREEN : ANSI_GRAY) + &quot;3. Go to floor.&quot; + ANSI_RESET</span>
+<span class="nc" id="L733">                                            + &quot;\n&quot;);</span>
+<span class="nc" id="L734">                            System.out.println(ANSI_RED + (4) + &quot;. Back&quot; + ANSI_RESET);</span>
+<span class="nc bnc" id="L735" title="All 2 branches missed.">                            System.out.print((invalidInput ? ANSI_RED + &quot;Invalid input. Try again: &quot;</span>
+<span class="nc" id="L736">                                    : ANSI_BLUE + &quot;Select action: &quot;) + ANSI_RESET);</span>
+                            // Take the input.
+<span class="nc" id="L738">                            input = scanner.nextLine();</span>
+                            // Input must be an integer.
+<span class="nc bnc" id="L740" title="All 2 branches missed.">                            if (!input.matches(&quot;[0-4]&quot;)) {</span>
+<span class="nc" id="L741">                                invalidInput = true;</span>
+<span class="nc" id="L742">                                continue;</span>
+                            }
+                            // Parse the input.
+<span class="nc" id="L745">                            cursor = Integer.parseInt(input);</span>
+                            // Switch on the input.
+<span class="nc bnc" id="L747" title="All 6 branches missed.">                            switch (cursor) {</span>
+                                case 0:
+                                    // Call elevator ride.
+                                    try {
+<span class="nc" id="L751">                                        person.callElevatorRide();</span>
+<span class="nc" id="L752">                                    } catch (Exception e) {</span>
+                                        // Print the header.
+<span class="nc" id="L754">                                        printEditorHeader(&quot;Action editor&quot;);</span>
+<span class="nc" id="L755">                                        System.out.println(ANSI_RED + &quot;Error: &quot; + e.getMessage() + ANSI_RESET);</span>
+                                        // We wait for the user to press enter.
+<span class="nc" id="L757">                                        scanner.nextLine();</span>
+<span class="nc" id="L758">                                        break;</span>
+                                    }
+                                    break;
+                                case 1:
+                                    // Board elevator.
+                                    try {
+<span class="nc" id="L764">                                        building.getElevator().board(person);</span>
+<span class="nc" id="L765">                                    } catch (Exception e) {</span>
+                                        // Print the header.
+<span class="nc" id="L767">                                        printEditorHeader(&quot;Action editor&quot;);</span>
+<span class="nc" id="L768">                                        System.out.println(ANSI_RED + &quot;Error: &quot; + e.getMessage() + ANSI_RESET);</span>
+                                        // We wait for the user to press enter.
+<span class="nc" id="L770">                                        scanner.nextLine();</span>
+<span class="nc" id="L771">                                        break;</span>
+                                    }
+                                    break;
+                                case 2:
+                                    // Leave elevator.
+                                    try {
+<span class="nc" id="L777">                                        person.disembark();</span>
+<span class="nc" id="L778">                                    } catch (Exception e) {</span>
+                                        // Print the header.
+<span class="nc" id="L780">                                        printEditorHeader(&quot;Action editor&quot;);</span>
+<span class="nc" id="L781">                                        System.out.println(ANSI_RED + &quot;Error: &quot; + e.getMessage() + ANSI_RESET);</span>
+                                        // We wait for the user to press enter.
+<span class="nc" id="L783">                                        scanner.nextLine();</span>
+<span class="nc" id="L784">                                        break;</span>
+                                    }
+                                    break;
+                                case 3:
+                                    // Go to floor.
+                                    // Print the header.
+                                    while (true) {
+<span class="nc" id="L791">                                        printEditorHeader(&quot;Action editor&quot;);</span>
+                                        // Here, we print a list of floors. Then we ask the user what to do.
+<span class="nc" id="L793">                                        int j = 0;</span>
+<span class="nc bnc" id="L794" title="All 2 branches missed.">                                        for (; j &lt; building.getFloors().size(); j++) {</span>
+<span class="nc" id="L795">                                            System.out.println(ANSI_GREEN + (j) + &quot;. &quot;</span>
+<span class="nc" id="L796">                                                    + building.getFloors().get(j).getName() + ANSI_RESET);</span>
+                                        }
+<span class="nc" id="L798">                                        System.out.println(ANSI_RED + (j) + &quot;. Back&quot; + ANSI_RESET);</span>
+<span class="nc bnc" id="L799" title="All 2 branches missed.">                                        System.out.print((invalidInput ? ANSI_RED + &quot;Invalid input. Try again: &quot;</span>
+<span class="nc" id="L800">                                                : ANSI_BLUE + &quot;Select floor: &quot;) + ANSI_RESET);</span>
+                                        // Take the input.
+<span class="nc" id="L802">                                        input = scanner.nextLine();</span>
+                                        // Input must be an integer.
+<span class="nc bnc" id="L804" title="All 2 branches missed.">                                        if (!input.matches(&quot;[0-9]+&quot;)) {</span>
+<span class="nc" id="L805">                                            invalidInput = true;</span>
+<span class="nc" id="L806">                                            continue;</span>
+                                        }
+                                        // Parse the input.
+<span class="nc" id="L809">                                        int floorIndex = Integer.parseInt(input);</span>
+                                        // Floor index must be in the range of the building's floors.
+<span class="nc bnc" id="L811" title="All 2 branches missed.">                                        if (floorIndex == building.getFloors().size()) {</span>
+<span class="nc" id="L812">                                            break;</span>
+                                        }
+<span class="nc bnc" id="L814" title="All 2 branches missed.">                                        if (floorIndex &gt; building.getFloors().size()) {</span>
+<span class="nc" id="L815">                                            invalidInput = true;</span>
+<span class="nc" id="L816">                                            continue;</span>
+                                        }
+                                        try {
+<span class="nc" id="L819">                                            person.chooseFloor(building.getFloors().get(floorIndex));</span>
+<span class="nc" id="L820">                                        } catch (Exception e) {</span>
+                                            // Print the header.
+<span class="nc" id="L822">                                            printEditorHeader(&quot;Action editor&quot;);</span>
+<span class="nc" id="L823">                                            System.out.println(ANSI_RED + &quot;Error: &quot; + e.getMessage() + ANSI_RESET);</span>
+                                            // We wait for the user to press enter.
+<span class="nc" id="L825">                                            scanner.nextLine();</span>
+<span class="nc" id="L826">                                            breakOut = true;</span>
+                                            break;
+                                        }
+                                        break;
+                                    }
+<span class="nc" id="L831">                                    break;</span>
+                                case 4:
+                                    // Back.
+<span class="nc" id="L834">                                    breakOut = true;</span>
+                                    break;
+                            }
+<span class="nc bnc" id="L837" title="All 2 branches missed.">                            if (breakOut)</span>
+                                break;
+                        }
+                    }
+                    break;
+                case 3:
+                    // Remove key from person in the building.
+                    while (true) {
+                        // Print the header.
+<span class="nc" id="L846">                        printEditorHeader(&quot;Action editor&quot;);</span>
+                        // Here, we print a list of people. Then we ask the user what to do.
+<span class="nc" id="L848">                        int j = 0;</span>
+<span class="nc bnc" id="L849" title="All 2 branches missed.">                        for (; j &lt; building.getPersons().size(); j++) {</span>
+<span class="nc" id="L850">                            System.out.println(ANSI_GREEN + (j) + &quot;. &quot; + building.getPersons().get(j).getName()</span>
+<span class="nc" id="L851">                                    + ANSI_BLUE + &quot;\t\tKey: &quot; + ANSI_PURPLE +</span>
+<span class="nc bnc" id="L852" title="All 2 branches missed.">                                    (building.getPersons().get(j).getKey() == null ? &quot;null&quot;</span>
+<span class="nc" id="L853">                                            : building.getPersons().get(j).getKey().getName())</span>
+<span class="nc" id="L854">                                    + ANSI_RESET);</span>
+                        }
+<span class="nc" id="L856">                        System.out.println(ANSI_RED + (j) + &quot;. Back&quot; + ANSI_RESET);</span>
+<span class="nc" id="L857">                        System.out.print(</span>
+<span class="nc bnc" id="L858" title="All 2 branches missed.">                                (invalidInput ? ANSI_RED + &quot;Invalid input. Try again: &quot; : ANSI_BLUE + &quot;Select person: &quot;)</span>
+<span class="nc" id="L859">                                        + ANSI_RESET);</span>
+                        // Take the input.
+<span class="nc" id="L861">                        input = scanner.nextLine();</span>
+                        // Input must be an integer.
+<span class="nc bnc" id="L863" title="All 2 branches missed.">                        if (!input.matches(&quot;[0-9]+&quot;)) {</span>
+<span class="nc" id="L864">                            invalidInput = true;</span>
+<span class="nc" id="L865">                            continue;</span>
+                        }
+                        // Parse the input.
+<span class="nc" id="L868">                        int personIndex = Integer.parseInt(input);</span>
+                        // Person index must be in the range of the building's people.
+<span class="nc bnc" id="L870" title="All 2 branches missed.">                        if (personIndex == building.getPersons().size()) {</span>
+<span class="nc" id="L871">                            break;</span>
+                        }
+<span class="nc bnc" id="L873" title="All 2 branches missed.">                        if (personIndex &gt; building.getPersons().size()) {</span>
+<span class="nc" id="L874">                            invalidInput = true;</span>
+<span class="nc" id="L875">                            continue;</span>
+                        }
+                        // Get the person.
+<span class="nc" id="L878">                        Person person = building.getPersons().get(personIndex);</span>
+                        // If the person doesn't already have a key, we print an error.
+<span class="nc bnc" id="L880" title="All 2 branches missed.">                        if (person.getKey() == null) {</span>
+                            // Print the header.
+<span class="nc" id="L882">                            printEditorHeader(&quot;Action editor&quot;);</span>
+<span class="nc" id="L883">                            System.out.println(ANSI_RED + &quot;Error: &quot; + person.getName() + &quot; doesn't have a key already!&quot;</span>
+<span class="nc" id="L884">                                    + ANSI_RESET);</span>
+                            // We wait for the user to press enter.
+<span class="nc" id="L886">                            scanner.nextLine();</span>
+<span class="nc" id="L887">                            continue;</span>
+                        }
+                        do {
+                            // Print the header.
+<span class="nc" id="L891">                            printEditorHeader(&quot;Action editor&quot;);</span>
+                            // We ask confirmation.
+<span class="nc" id="L893">                            System.out.println(ANSI_BLUE + &quot;Are you sure you want to remove the key &quot; + ANSI_YELLOW</span>
+<span class="nc" id="L894">                                    + person.getKey() + ANSI_BLUE + &quot; from &quot; + ANSI_PURPLE + person.getName()</span>
+<span class="nc" id="L895">                                    + ANSI_BLUE + &quot;?&quot; + ANSI_RESET);</span>
+<span class="nc" id="L896">                            System.out.println(ANSI_BLUE + &quot;Y: yes&quot; + ANSI_RESET);</span>
+<span class="nc" id="L897">                            System.out.println(ANSI_RED + &quot;N: no&quot; + ANSI_RESET);</span>
+<span class="nc" id="L898">                            System.out.print(ANSI_BLUE + &quot;: &quot; + ANSI_RESET);</span>
+<span class="nc" id="L899">                            input = scanner.nextLine();</span>
+<span class="nc bnc" id="L900" title="All 2 branches missed.">                            if (input.equalsIgnoreCase(&quot;Y&quot;)) {</span>
+<span class="nc" id="L901">                                person.setKey(null);</span>
+<span class="nc" id="L902">                                break;</span>
+                            }
+<span class="nc bnc" id="L904" title="All 4 branches missed.">                            if (input.equals(&quot;n&quot;) || input.equals(&quot;N&quot;)) {</span>
+                                break;
+                            }
+                        } while (true);
+                        break;
+                    }
+<span class="nc" id="L910">                    break;</span>
+                case 4:
+                    // Remove person from building.
+                    // action = removePersonFromBuilding();
+<span class="nc" id="L914">                    break;</span>
+                case 5:
+                    // Back.
+<span class="nc" id="L917">                    return true;</span>
+                default:
+                    // Invalid input.
+<span class="nc" id="L920">                    invalidInput = true;</span>
+                    break;
+            }
+
+        }
+    }
+
+    private boolean simulationStatus() {
+        // Clear the screen.
+<span class="nc" id="L929">        clearScreen();</span>
+        // Print the simulation status.
+<span class="nc" id="L931">        System.out.println(ANSI_PURPLE + &quot;== Simulation status ==&quot; + ANSI_RESET);</span>
+        // Print the building infos.
+<span class="nc" id="L933">        System.out.println(ANSI_BLUE + &quot;The building &quot; + ANSI_RESET + ANSI_PURPLE + building.getName()</span>
+<span class="nc" id="L934">                + ANSI_RESET + ANSI_BLUE + &quot; has &quot; + ANSI_RESET</span>
+<span class="nc bnc" id="L935" title="All 2 branches missed.">                + ((building.numberOfFloors() == 0) ? ANSI_RED : ANSI_GREEN) + building.numberOfFloors()</span>
+<span class="nc" id="L936">                + ANSI_RESET + ANSI_BLUE + &quot; floors and &quot; + ANSI_RESET</span>
+<span class="nc bnc" id="L937" title="All 2 branches missed.">                + ((building.numberOfPeople() == 0) ? ANSI_RED : ANSI_GREEN) + building.numberOfPeople() + ANSI_RESET</span>
+<span class="nc" id="L938">                + ANSI_BLUE + &quot; people inside.&quot; + ANSI_RESET);</span>
+        // Print the elevator infos.
+<span class="nc" id="L940">        System.out.println(ANSI_BLUE + &quot;The elevator is currently on floor &quot; + ANSI_RESET</span>
+<span class="nc bnc" id="L941" title="All 2 branches missed.">                + ((elevator.getCurrentFloor() == null) ? ANSI_RED : ANSI_GREEN) + elevator.getCurrentFloor()</span>
+<span class="nc" id="L942">                + ANSI_RESET + ANSI_BLUE + &quot;, has &quot; + ANSI_RESET</span>
+<span class="nc bnc" id="L943" title="All 2 branches missed.">                + ((elevator.numberOfPeople() == 0) ? ANSI_RED : ANSI_GREEN) + elevator.numberOfPeople() + ANSI_RESET</span>
+<span class="nc" id="L944">                + ANSI_BLUE + &quot; people inside,&quot;</span>
+<span class="nc" id="L945">                + ANSI_RESET + ANSI_BLUE + &quot; and it is &quot; + ANSI_RESET + ANSI_PURPLE</span>
+<span class="nc" id="L946">                + elevator.getCurrentMovingDirection().toString() + ANSI_BLUE + &quot;.&quot; + ANSI_RESET);</span>
+        // Print key infos.
+<span class="nc" id="L948">        System.out.println(ANSI_BLUE + &quot;Currently, there are &quot; + ANSI_RESET + ANSI_GREEN + building.numberOfKeys()</span>
+<span class="nc" id="L949">                + ANSI_RESET + ANSI_BLUE + &quot; keys registered to the building.&quot; + ANSI_RESET);</span>
+        // Print end of simulation status.
+<span class="nc" id="L951">        System.out.println(ANSI_PURPLE + &quot;== End of Simulation Status ==&quot; + ANSI_RESET);</span>
+        // Return true.
+<span class="nc" id="L953">        return true;</span>
+    }
+
+    private boolean elevatorEditor() throws Error, IllegalStateException {
+        // If elevator is not initialized, we throw an error.
+<span class="nc bnc" id="L958" title="All 2 branches missed.">        if (elevator == null) {</span>
+<span class="nc" id="L959">            throw new IllegalStateException(&quot;Elevator not initialized.&quot;);</span>
+        }
+        // Set up scanner.
+<span class="nc" id="L962">        Scanner scanner = new Scanner(System.in);</span>
+        // Setup the cursor.
+<span class="nc" id="L964">        int cursor = -1;</span>
+        // Loop.
+<span class="nc" id="L966">        boolean invalidValue = false;</span>
+<span class="nc" id="L967">        while (true) {</span>
+<span class="nc" id="L968">            printEditorHeader(&quot;Elevator&quot;);</span>
+            // Print the elevator details.
+<span class="nc" id="L970">            System.out.println(</span>
+<span class="nc" id="L971">                    ANSI_BLUE + &quot;Current Floor: &quot; + ANSI_RESET + ANSI_GREEN + elevator.getCurrentFloor() + ANSI_RESET);</span>
+<span class="nc" id="L972">            System.out.println(ANSI_BLUE + &quot;Current Direction: &quot; + ANSI_RESET + ANSI_GREEN</span>
+<span class="nc" id="L973">                    + elevator.getCurrentMovingDirection().toString() + ANSI_RESET);</span>
+<span class="nc" id="L974">            System.out.println(ANSI_BLUE + &quot;Cabin weight: &quot; + ANSI_RESET</span>
+<span class="nc bnc" id="L975" title="All 2 branches missed.">                    + (cursor == 0 ? ANSI_BLINK + ANSI_YELLOW : ANSI_GREEN) + elevator.getWeight() + ANSI_RESET);</span>
+<span class="nc" id="L976">            System.out.println(ANSI_BLUE + &quot;Cabin Load Limit: &quot; + ANSI_RESET</span>
+<span class="nc bnc" id="L977" title="All 2 branches missed.">                    + (cursor == 1 ? ANSI_BLINK + ANSI_YELLOW : ANSI_GREEN) + +elevator.getMaxLoad() + ANSI_RESET);</span>
+<span class="nc" id="L978">            System.out.println(ANSI_BLUE + &quot;Cabin Current Load: &quot; + ANSI_RESET</span>
+<span class="nc bnc" id="L979" title="All 2 branches missed.">                    + (elevator.isOverloaded() ? ANSI_RED : ANSI_GREEN) + elevator.getCurrentLoad() + ANSI_RESET);</span>
+<span class="nc" id="L980">            System.out.println(ANSI_BLUE + &quot;Currently, there are &quot; + ANSI_RESET</span>
+<span class="nc bnc" id="L981" title="All 2 branches missed.">                    + ((elevator.numberOfPeople() == 0) ? ANSI_RED : ANSI_GREEN) + elevator.numberOfPeople()</span>
+<span class="nc" id="L982">                    + ANSI_RESET + ANSI_BLUE + &quot; people in the elevator.&quot; + ANSI_RESET);</span>
+<span class="nc" id="L983">            System.out.println();</span>
+            // Print the options if user has yet to choose what to modify.
+<span class="nc bnc" id="L985" title="All 2 branches missed.">            if (cursor == -1) {</span>
+<span class="nc" id="L986">                System.out.println(ANSI_GREEN + &quot;0. Change cabin weight&quot; + ANSI_RESET);</span>
+<span class="nc" id="L987">                System.out.println(ANSI_GREEN + &quot;1. Change cabin load limit&quot; + ANSI_RESET);</span>
+<span class="nc" id="L988">                System.out.println(ANSI_RED + &quot;2. Done&quot; + ANSI_RESET);</span>
+<span class="nc" id="L989">            } else {</span>
+<span class="nc bnc" id="L990" title="All 2 branches missed.">                if (invalidValue)</span>
+<span class="nc" id="L991">                    System.out.println(ANSI_RED + &quot;Invalid input. Try again: &quot; + ANSI_RESET);</span>
+                else
+<span class="nc" id="L993">                    System.out.println(ANSI_BLUE + &quot;Insert value: &quot; + ANSI_RESET);</span>
+            }
+<span class="nc" id="L995">            invalidValue = false;</span>
+            // Get input
+<span class="nc" id="L997">            String input = &quot;&quot;;</span>
+            // If cursor is -1, we ask to choose an option.
+<span class="nc bnc" id="L999" title="All 2 branches missed.">            if (cursor == -1) {</span>
+<span class="nc" id="L1000">                input = scanner.nextLine();</span>
+<span class="nc bnc" id="L1001" title="All 2 branches missed.">                if (!input.matches(&quot;[0-2]&quot;)) {</span>
+<span class="nc" id="L1002">                    invalidValue = true;</span>
+<span class="nc" id="L1003">                    continue;</span>
+                }
+                // Set cursor.
+<span class="nc" id="L1006">                cursor = Integer.parseInt(input);</span>
+<span class="nc bnc" id="L1007" title="All 2 branches missed.">                if (cursor == 2) {</span>
+<span class="nc" id="L1008">                    return true;</span>
+                }
+            }
+            // Else, we are asking for a input.
+            else {
+                // Get input. It must be a number.
+<span class="nc" id="L1014">                input = scanner.nextLine();</span>
+<span class="nc bnc" id="L1015" title="All 2 branches missed.">                if (!Simulator.isDouble(input)) {</span>
+<span class="nc" id="L1016">                    invalidValue = true;</span>
+<span class="nc" id="L1017">                    continue;</span>
+                }
+                // Set the appropriate value.
+<span class="nc bnc" id="L1020" title="All 3 branches missed.">                switch (cursor) {</span>
+                    case 0:
+<span class="nc" id="L1022">                        elevator.setWeight(Double.parseDouble(input));</span>
+<span class="nc" id="L1023">                        break;</span>
+                    case 1:
+<span class="nc" id="L1025">                        elevator.setMaxLoad(Double.parseDouble(input));</span>
+<span class="nc" id="L1026">                        break;</span>
+                    default:
+                        // We should never get here.
+<span class="nc" id="L1029">                        throw new Error(&quot;Invalid cursor value.&quot;);</span>
+                }
+                // Reset cursor.
+<span class="nc" id="L1032">                cursor = -1;</span>
+            }
+        }
+        // We should never get here.
+    }
+
+    private boolean floorEditor() throws Error {
+        // Set up scanner.
+<span class="nc" id="L1040">        Scanner scanner = new Scanner(System.in);</span>
+        // Editor loop
+<span class="nc" id="L1042">        while (true) {</span>
+            // Ask user for input.
+<span class="nc" id="L1044">            String input = &quot;&quot;;</span>
+<span class="nc" id="L1045">            boolean matchesRegex = true;</span>
+            do {
+<span class="nc" id="L1047">                printEditorHeader(&quot;Floor&quot;);</span>
+                // Ask user if he wants to add, edit, delete or view a floor.
+<span class="nc" id="L1049">                System.out.println(ANSI_BLUE + &quot;What do you want to do?&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1050">                System.out.println(ANSI_GREEN + &quot;0. Add a floor&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1051">                System.out.println(ANSI_YELLOW + &quot;1. Edit a floor&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1052">                System.out.println(ANSI_RED + &quot;2. Remove a floor&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1053">                System.out.println(ANSI_CYAN + &quot;3. Back&quot; + ANSI_RESET);</span>
+                // Get input.
+<span class="nc bnc" id="L1055" title="All 2 branches missed.">                if (matchesRegex)</span>
+<span class="nc" id="L1056">                    System.out.print(ANSI_BLUE + &quot;Input: &quot; + ANSI_RESET);</span>
+                else
+<span class="nc" id="L1058">                    System.out.print(ANSI_RED + &quot;Invalid input. Try again: &quot; + ANSI_RESET);</span>
+<span class="nc" id="L1059">                input = scanner.nextLine();</span>
+<span class="nc" id="L1060">                matchesRegex = input.matches(&quot;[0-3]&quot;);</span>
+<span class="nc bnc" id="L1061" title="All 2 branches missed.">            } while (!matchesRegex);</span>
+
+            // Remember mode
+            EditorMode mode;
+<span class="nc bnc" id="L1065" title="All 5 branches missed.">            switch (input) {</span>
+                case &quot;0&quot;:
+<span class="nc" id="L1067">                    mode = EditorMode.ADD;</span>
+<span class="nc" id="L1068">                    break;</span>
+                case &quot;1&quot;:
+<span class="nc" id="L1070">                    mode = EditorMode.EDIT;</span>
+<span class="nc" id="L1071">                    break;</span>
+                case &quot;2&quot;:
+<span class="nc" id="L1073">                    mode = EditorMode.DELETE;</span>
+<span class="nc" id="L1074">                    break;</span>
+                case &quot;3&quot;:
+<span class="nc" id="L1076">                    return true;</span>
+                default:
+<span class="nc" id="L1078">                    System.out.println(ANSI_RED + &quot;Invalid input (&quot; + input + &quot;).&quot; + ANSI_RESET);</span>
+                    // If we get here, something went wrong.
+<span class="nc" id="L1080">                    throw new Error(&quot;Invalid program state.&quot;);</span>
+            }
+
+<span class="nc" id="L1083">            Floor floor = null;</span>
+<span class="nc" id="L1084">            String name = &quot;&quot;;</span>
+            // If the mode isn't add, we need to ask who's the floor we want to
+            // edit/show/delete.
+<span class="nc bnc" id="L1087" title="All 2 branches missed.">            if (mode != EditorMode.ADD) {</span>
+<span class="nc bnc" id="L1088" title="All 2 branches missed.">                do {</span>
+<span class="nc" id="L1089">                    printEditorHeader(&quot;Floor&quot;);</span>
+                    // Print the floor list.
+<span class="nc" id="L1091">                    int i = 0;</span>
+<span class="nc bnc" id="L1092" title="All 2 branches missed.">                    for (; i &lt; building.getFloors().size(); i++) {</span>
+<span class="nc" id="L1093">                        System.out.println(ANSI_BLUE + i + &quot;: &quot; + ANSI_RESET + ANSI_YELLOW</span>
+<span class="nc" id="L1094">                                + building.getFloors().get(i).getName() + ANSI_RESET);</span>
+                    }
+<span class="nc" id="L1096">                    System.out.println(ANSI_BLUE + i + &quot;: &quot; + ANSI_RESET + ANSI_RED + &quot;Back&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1097">                    System.out.print(</span>
+<span class="nc" id="L1098">                            ANSI_BLUE + &quot;Input the number corresponding to the floor to &quot; + mode.toString() + &quot;: &quot;</span>
+<span class="nc" id="L1099">                                    + ANSI_RESET);</span>
+                    // Get input.
+<span class="nc" id="L1101">                    name = scanner.nextLine();</span>
+<span class="nc bnc" id="L1102" title="All 4 branches missed.">                } while (name.equals(&quot;&quot;) || !name.matches(&quot;[0-9]+&quot;)</span>
+<span class="nc" id="L1103">                        || Integer.parseInt(name) &gt; building.getFloors().size());</span>
+                // Get the person if the input isn't back.
+<span class="nc bnc" id="L1105" title="All 2 branches missed.">                if (name.equals(Integer.toString(building.getFloors().size()))) {</span>
+<span class="nc" id="L1106">                    continue;</span>
+                }
+<span class="nc" id="L1108">                floor = building.getFloors().get(Integer.parseInt(name)).clone();</span>
+            }
+
+            // If add, we initialize a new person.
+<span class="nc bnc" id="L1112" title="All 2 branches missed.">            if (mode == EditorMode.ADD) {</span>
+<span class="nc" id="L1113">                floor = new Floor();</span>
+            }
+
+            // Just for safety, we check if the floor is null.
+<span class="nc bnc" id="L1117" title="All 2 branches missed.">            if (floor == null)</span>
+<span class="nc" id="L1118">                throw new Error(&quot;Invalid program state.&quot;);</span>
+
+            // If mode is delete, we need to ask if the user really wants to delete the
+            // floor.
+<span class="nc bnc" id="L1122" title="All 2 branches missed.">            if (mode == EditorMode.DELETE) {</span>
+<span class="nc" id="L1123">                printEditorHeader(&quot;Floor&quot;);</span>
+                // Print the floor delete confirmation.
+<span class="nc" id="L1125">                System.out.println(ANSI_BLUE + &quot;Are you sure you want to delete &quot; + ANSI_RESET + ANSI_YELLOW</span>
+<span class="nc" id="L1126">                        + floor.getName() + ANSI_RESET + ANSI_BLUE + &quot;?&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1127">                System.out.println(ANSI_GREEN + &quot;Y. Yes&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1128">                System.out.println(ANSI_RED + &quot;N. No&quot; + ANSI_RESET);</span>
+                // Ask user for input.
+<span class="nc" id="L1130">                String input2 = &quot;&quot;;</span>
+                do {
+<span class="nc" id="L1132">                    input2 = scanner.nextLine();</span>
+<span class="nc bnc" id="L1133" title="All 2 branches missed.">                } while (!input2.matches(&quot;[yn]&quot;));</span>
+
+<span class="nc bnc" id="L1135" title="All 2 branches missed.">                if (input2.equalsIgnoreCase(&quot;y&quot;)) {</span>
+                    // Delete the floor.
+<span class="nc" id="L1137">                    building.getFloors().remove(floor);</span>
+<span class="nc" id="L1138">                    printEditorHeader(&quot;Floor&quot;);</span>
+                    // Print the floor delete confirmation.
+<span class="nc" id="L1140">                    System.out.println(ANSI_BLUE + &quot;Floor &quot; + ANSI_RESET + ANSI_YELLOW + floor.toString() + ANSI_RESET</span>
+<span class="nc" id="L1141">                            + ANSI_BLUE + &quot; deleted.&quot; + ANSI_RESET);</span>
+                    // End of floor editor.
+<span class="nc" id="L1143">                    System.out.println(ANSI_BLUE + &quot;== End of floor editor ==&quot; + ANSI_RESET);</span>
+                }
+<span class="nc" id="L1145">                continue;</span>
+            }
+            // Else, if we are in view mode, we just print the floor.
+<span class="nc bnc" id="L1148" title="All 2 branches missed.">            else if (mode == EditorMode.VIEW) {</span>
+<span class="nc" id="L1149">                printEditorHeader(&quot;Floor&quot;);</span>
+                // Print the floor name.
+<span class="nc" id="L1151">                System.out</span>
+<span class="nc" id="L1152">                        .println(ANSI_BLUE + &quot;Floor name: &quot; + ANSI_RESET + ANSI_YELLOW + floor.getName() + ANSI_RESET);</span>
+                // Print the floor height.
+<span class="nc" id="L1154">                System.out.println(</span>
+<span class="nc" id="L1155">                        ANSI_BLUE + &quot;Floor height: &quot; + ANSI_RESET + ANSI_YELLOW + floor.getDistance() + ANSI_RESET);</span>
+                // Print the floor keycode.
+<span class="nc" id="L1157">                System.out.println(</span>
+<span class="nc" id="L1158">                        ANSI_BLUE + &quot;Floor keycode: &quot; + ANSI_RESET + ANSI_YELLOW + floor.getKey() + ANSI_RESET);</span>
+                // End of floor editor.
+<span class="nc" id="L1160">                System.out.println(ANSI_BLUE + &quot;== End of floor editor ==&quot; + ANSI_RESET);</span>
+                // Wait for user to press enter.
+<span class="nc" id="L1162">                scanner.nextLine();</span>
+<span class="nc" id="L1163">                continue;</span>
+            }
+            // Else, we are in edit or add mode.
+            else {
+                // Init cursor.
+<span class="nc" id="L1168">                int cursor = -1;</span>
+<span class="nc" id="L1169">                boolean invalidInput = false;</span>
+                // Enter command loop.
+<span class="nc" id="L1171">                boolean exitEditor = false;</span>
+<span class="nc bnc" id="L1172" title="All 2 branches missed.">                while (!exitEditor) {</span>
+                    // Print the floor details.
+                    // Depending on cursor, we ask for input in different ways.
+<span class="nc" id="L1175">                    String input2 = &quot;&quot;;</span>
+<span class="nc" id="L1176">                    printEditorHeader(&quot;Floor&quot;);</span>
+                    // Print the floor name.
+<span class="nc" id="L1178">                    System.out.println(ANSI_BLUE + &quot;Floor name: &quot;</span>
+<span class="nc bnc" id="L1179" title="All 2 branches missed.">                            + ((cursor == 0) ? ANSI_YELLOW + ANSI_BLINK : ANSI_GREEN) + floor.getName() + ANSI_RESET);</span>
+                    // Print the floor height.
+<span class="nc" id="L1181">                    System.out.println(</span>
+<span class="nc bnc" id="L1182" title="All 2 branches missed.">                            ANSI_BLUE + &quot;Floor height: &quot; + ((cursor == 1) ? ANSI_YELLOW + ANSI_BLINK : ANSI_GREEN)</span>
+<span class="nc" id="L1183">                                    + floor.getDistance() + ANSI_RESET);</span>
+                    // Print the floor keycode.
+<span class="nc" id="L1185">                    System.out.println(ANSI_BLUE + &quot;Floor keycode: &quot;</span>
+<span class="nc bnc" id="L1186" title="All 2 branches missed.">                            + ((cursor == 2) ? ANSI_YELLOW + ANSI_BLINK : ANSI_GREEN) + floor.getKey() + ANSI_RESET);</span>
+<span class="nc bnc" id="L1187" title="All 2 branches missed.">                    if (cursor == -1) {</span>
+<span class="nc" id="L1188">                        System.out.println(ANSI_GREEN + &quot;0. Edit name&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1189">                        System.out.println(ANSI_GREEN + &quot;1. Edit height&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1190">                        System.out.println(ANSI_GREEN + &quot;2. Edit keycode&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1191">                        System.out.println(ANSI_RED + &quot;3. Done&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1192">                        System.out.println(ANSI_RED + &quot;4. Undo&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1193">                    } else {</span>
+<span class="nc bnc" id="L1194" title="All 2 branches missed.">                        if (invalidInput)</span>
+<span class="nc" id="L1195">                            System.out.print(ANSI_RED + &quot;Invalid input. Try again:&quot; + ANSI_RESET);</span>
+                        else
+<span class="nc" id="L1197">                            System.out.print(ANSI_BLUE + &quot;Input: &quot; + ANSI_RESET);</span>
+                    }
+
+<span class="nc" id="L1200">                    invalidInput = false;</span>
+<span class="nc" id="L1201">                    input2 = scanner.nextLine();</span>
+<span class="nc bnc" id="L1202" title="All 4 branches missed.">                    if (cursor == -1 &amp;&amp; !input2.matches(&quot;[0-4]&quot;)) {</span>
+<span class="nc" id="L1203">                        invalidInput = true;</span>
+<span class="nc" id="L1204">                        continue;</span>
+<span class="nc bnc" id="L1205" title="All 4 branches missed.">                    } else if (cursor == 0 &amp;&amp; input2.equals(&quot;&quot;)) {</span>
+<span class="nc" id="L1206">                        invalidInput = true;</span>
+<span class="nc" id="L1207">                        continue;</span>
+                    }
+<span class="nc bnc" id="L1209" title="All 5 branches missed.">                    switch (cursor) {</span>
+                        case -1:
+                            // This means the user has just chosen an option.
+<span class="nc bnc" id="L1212" title="All 6 branches missed.">                            switch (Integer.parseInt(input2)) {</span>
+                                case 0:
+<span class="nc" id="L1214">                                    cursor = 0;</span>
+<span class="nc" id="L1215">                                    break;</span>
+                                case 1:
+<span class="nc" id="L1217">                                    cursor = 1;</span>
+<span class="nc" id="L1218">                                    break;</span>
+                                case 2:
+<span class="nc" id="L1220">                                    cursor = 2;</span>
+<span class="nc" id="L1221">                                    break;</span>
+                                case 3:
+                                    // If mode is add, we add the floor.
+<span class="nc bnc" id="L1224" title="All 2 branches missed.">                                    if (mode == EditorMode.ADD) {</span>
+<span class="nc" id="L1225">                                        building.addFloor(floor);</span>
+<span class="nc" id="L1226">                                    } else {</span>
+                                        // Else, we are in edit mode, so we update the floor.
+<span class="nc" id="L1228">                                        building.getFloors().get(Integer.parseInt(name))</span>
+<span class="nc" id="L1229">                                                .setName(floor.getName())</span>
+<span class="nc" id="L1230">                                                .setDistance(floor.getDistance())</span>
+<span class="nc" id="L1231">                                                .setKey(floor.getKey());</span>
+                                    }
+                                case 4:
+<span class="nc" id="L1234">                                    printEditorHeader(&quot;Floor&quot;);</span>
+                                    // Print &quot;Saved!&quot;
+<span class="nc" id="L1236">                                    System.out</span>
+<span class="nc bnc" id="L1237" title="All 2 branches missed.">                                            .println(ANSI_GREEN + ((input2 == &quot;2&quot;) ? &quot;Saved!&quot; : &quot;Done.&quot;) + ANSI_RESET);</span>
+                                    // End of person editor.
+<span class="nc" id="L1239">                                    System.out.println(ANSI_BLUE + &quot;== End of floor editor ==&quot; + ANSI_RESET);</span>
+                                    // Return true.
+<span class="nc" id="L1241">                                    exitEditor = true;</span>
+<span class="nc" id="L1242">                                    continue;</span>
+                            }
+<span class="nc" id="L1244">                            break;</span>
+                        case 0:
+                            // This means the user is editing the name.
+<span class="nc" id="L1247">                            floor.setName(input2);</span>
+                            // Reset cursor.
+<span class="nc" id="L1249">                            cursor = -1;</span>
+<span class="nc" id="L1250">                            break;</span>
+                        case 1:
+                            // This means the user is editing the height.
+                            try {
+<span class="nc" id="L1254">                                floor.setDistance(Integer.parseInt(input2));</span>
+<span class="nc" id="L1255">                            } catch (NumberFormatException e) {</span>
+<span class="nc" id="L1256">                                invalidInput = true;</span>
+<span class="nc" id="L1257">                                continue;</span>
+                            }
+                            // Reset cursor.
+<span class="nc" id="L1260">                            cursor = -1;</span>
+<span class="nc" id="L1261">                            break;</span>
+                        case 2:
+                            // This means the user is editing the keycode.
+                            try {
+<span class="nc" id="L1265">                                floor.setDistance(Integer.parseInt(input2));</span>
+<span class="nc" id="L1266">                            } catch (NumberFormatException e) {</span>
+<span class="nc" id="L1267">                                invalidInput = true;</span>
+<span class="nc" id="L1268">                                continue;</span>
+                            }
+                            // Reset cursor.
+<span class="nc" id="L1271">                            cursor = -1;</span>
+<span class="nc" id="L1272">                            break;</span>
+                        default:
+<span class="nc" id="L1274">                            throw new Error(&quot;Invalid cursor value (&quot; + cursor + &quot;)&quot;);</span>
+                    }
+                }
+            }
+        }
+        // Since we should always return with one of the above cases, we should never
+        // reach this point.
+    }
+
+    private boolean personEditor() throws Error {
+        // Set up scanner.
+<span class="nc" id="L1285">        Scanner scanner = new Scanner(System.in);</span>
+        // Editor loop
+<span class="nc" id="L1287">        while (true) {</span>
+            // Ask user for input.
+<span class="nc" id="L1289">            String input = &quot;&quot;;</span>
+<span class="nc" id="L1290">            boolean matchesRegex = true;</span>
+            do {
+<span class="nc" id="L1292">                printEditorHeader(&quot;Person&quot;);</span>
+                // Ask user if he wants to add, edit, delete or view a person.
+<span class="nc" id="L1294">                System.out.println(ANSI_BLUE + &quot;What do you want to do?&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1295">                System.out.println(ANSI_GREEN + &quot;0. Add a person&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1296">                System.out.println(ANSI_YELLOW + &quot;1. Edit a person&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1297">                System.out.println(ANSI_RED + &quot;2. Delete a person&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1298">                System.out.println(ANSI_CYAN + &quot;3. Back&quot; + ANSI_RESET);</span>
+                // Get input.
+<span class="nc bnc" id="L1300" title="All 2 branches missed.">                if (matchesRegex)</span>
+<span class="nc" id="L1301">                    System.out.print(ANSI_BLUE + &quot;Input: &quot; + ANSI_RESET);</span>
+                else
+<span class="nc" id="L1303">                    System.out.print(ANSI_RED + &quot;Invalid input. Try again: &quot; + ANSI_RESET);</span>
+<span class="nc" id="L1304">                input = scanner.nextLine();</span>
+<span class="nc" id="L1305">                matchesRegex = input.matches(&quot;[0-3]&quot;);</span>
+<span class="nc bnc" id="L1306" title="All 2 branches missed.">            } while (!matchesRegex);</span>
+
+            // Remember mode
+            EditorMode mode;
+<span class="nc bnc" id="L1310" title="All 5 branches missed.">            switch (input) {</span>
+                case &quot;0&quot;:
+<span class="nc" id="L1312">                    mode = EditorMode.ADD;</span>
+<span class="nc" id="L1313">                    break;</span>
+                case &quot;1&quot;:
+<span class="nc" id="L1315">                    mode = EditorMode.EDIT;</span>
+<span class="nc" id="L1316">                    break;</span>
+                case &quot;2&quot;:
+<span class="nc" id="L1318">                    mode = EditorMode.DELETE;</span>
+<span class="nc" id="L1319">                    break;</span>
+                case &quot;3&quot;:
+<span class="nc" id="L1321">                    return true;</span>
+                default:
+<span class="nc" id="L1323">                    System.out.println(ANSI_RED + &quot;Invalid input (&quot; + input + &quot;).&quot; + ANSI_RESET);</span>
+                    // If we get here, something went wrong.
+<span class="nc" id="L1325">                    throw new Error(&quot;Invalid program state.&quot;);</span>
+            }
+
+<span class="nc" id="L1328">            Person person = null;</span>
+<span class="nc" id="L1329">            String name = &quot;&quot;;</span>
+            // If the mode isn't add, we need to ask who's the person we want to
+            // edit/show/delete.
+<span class="nc bnc" id="L1332" title="All 2 branches missed.">            if (mode != EditorMode.ADD) {</span>
+<span class="nc bnc" id="L1333" title="All 2 branches missed.">                do {</span>
+<span class="nc" id="L1334">                    printEditorHeader(&quot;Person&quot;);</span>
+                    // Print the person list.
+<span class="nc" id="L1336">                    int i = 0;</span>
+<span class="nc bnc" id="L1337" title="All 2 branches missed.">                    for (; i &lt; people.size(); i++) {</span>
+<span class="nc" id="L1338">                        System.out.println(ANSI_BLUE + i + &quot;: &quot; + ANSI_RESET + ANSI_YELLOW + people.get(i).toString()</span>
+<span class="nc" id="L1339">                                + ANSI_RESET);</span>
+                    }
+<span class="nc" id="L1341">                    System.out.println(ANSI_BLUE + i + &quot;: &quot; + ANSI_RESET + ANSI_RED + &quot;Back&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1342">                    System.out.print(ANSI_BLUE + &quot;Input the number corresponding to the person to &quot; + mode.toString()</span>
+<span class="nc" id="L1343">                            + &quot;: &quot; + ANSI_RESET);</span>
+                    // Get input.
+<span class="nc" id="L1345">                    name = scanner.nextLine();</span>
+<span class="nc bnc" id="L1346" title="All 4 branches missed.">                } while (name.equals(&quot;&quot;) || !name.matches(&quot;[0-9]+&quot;) || Integer.parseInt(name) &gt; people.size());</span>
+                // Get the person if the input isn't back.
+<span class="nc bnc" id="L1348" title="All 2 branches missed.">                if (name.equals(Integer.toString(people.size()))) {</span>
+<span class="nc" id="L1349">                    continue;</span>
+                }
+<span class="nc" id="L1351">                person = people.get(Integer.parseInt(name)).clone();</span>
+            }
+
+            // If add, we initialize a new person.
+<span class="nc bnc" id="L1355" title="All 2 branches missed.">            if (mode == EditorMode.ADD) {</span>
+<span class="nc" id="L1356">                person = new Person();</span>
+            }
+
+            // Just for safety, we check if the person is null.
+<span class="nc bnc" id="L1360" title="All 2 branches missed.">            if (person == null)</span>
+<span class="nc" id="L1361">                throw new Error(&quot;Invalid program state.&quot;);</span>
+
+            // If mode is delete, we need to ask if the user really wants to delete the
+            // person.
+<span class="nc bnc" id="L1365" title="All 2 branches missed.">            if (mode == EditorMode.DELETE) {</span>
+<span class="nc" id="L1366">                printEditorHeader(&quot;Person&quot;);</span>
+                // Print the person delete confirmation.
+<span class="nc" id="L1368">                System.out.println(ANSI_BLUE + &quot;Are you sure you want to delete &quot; + ANSI_RESET + ANSI_YELLOW</span>
+<span class="nc" id="L1369">                        + person.toString() + ANSI_RESET + ANSI_BLUE + &quot;?&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1370">                System.out.println(ANSI_GREEN + &quot;Y. Yes&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1371">                System.out.println(ANSI_RED + &quot;N. No&quot; + ANSI_RESET);</span>
+                // Ask user for input.
+<span class="nc" id="L1373">                String input2 = &quot;&quot;;</span>
+                do {
+<span class="nc" id="L1375">                    input2 = scanner.nextLine();</span>
+<span class="nc bnc" id="L1376" title="All 2 branches missed.">                } while (!input2.matches(&quot;[yn]&quot;));</span>
+
+<span class="nc bnc" id="L1378" title="All 2 branches missed.">                if (input2.equalsIgnoreCase(&quot;y&quot;)) {</span>
+                    // Delete the person.
+<span class="nc" id="L1380">                    people.remove(person);</span>
+<span class="nc" id="L1381">                    printEditorHeader(&quot;Person&quot;);</span>
+                    // Print the person delete confirmation.
+<span class="nc" id="L1383">                    System.out.println(ANSI_BLUE + &quot;Person &quot; + ANSI_RESET + ANSI_YELLOW + person.toString() + ANSI_RESET</span>
+<span class="nc" id="L1384">                            + ANSI_BLUE + &quot; deleted.&quot; + ANSI_RESET);</span>
+                    // End of person editor.
+<span class="nc" id="L1386">                    System.out.println(ANSI_BLUE + &quot;== End of person editor ==&quot; + ANSI_RESET);</span>
+                }
+<span class="nc" id="L1388">                continue;</span>
+            }
+            // Else, if we are in view mode, we just print the person.
+<span class="nc bnc" id="L1391" title="All 2 branches missed.">            else if (mode == EditorMode.VIEW) {</span>
+<span class="nc" id="L1392">                printEditorHeader(&quot;Person&quot;);</span>
+                // Print the person.
+<span class="nc" id="L1394">                System.out.println(ANSI_BLUE + &quot;Person: &quot; + ANSI_RESET + ANSI_YELLOW + person.toString() + ANSI_RESET);</span>
+                // End of person editor.
+<span class="nc" id="L1396">                System.out.println(ANSI_BLUE + &quot;== End of person editor ==&quot; + ANSI_RESET);</span>
+                // Wait for user to press enter.
+<span class="nc" id="L1398">                scanner.nextLine();</span>
+<span class="nc" id="L1399">                continue;</span>
+            }
+            // Else, we are in edit or add mode.
+            else {
+                // Init cursor.
+<span class="nc" id="L1404">                int cursor = -1;</span>
+<span class="nc" id="L1405">                boolean invalidInput = false;</span>
+                // Enter command loop.
+<span class="nc" id="L1407">                boolean exitEditor = false;</span>
+<span class="nc bnc" id="L1408" title="All 2 branches missed.">                while (!exitEditor) {</span>
+                    // Print the person details.
+                    // Depending on cursor, we ask for input in different ways.
+<span class="nc" id="L1411">                    String input2 = &quot;&quot;;</span>
+<span class="nc" id="L1412">                    printEditorHeader(&quot;Person&quot;);</span>
+                    // Print the person details.
+<span class="nc" id="L1414">                    System.out.println(ANSI_BLUE + &quot;Name: &quot; + ANSI_RESET</span>
+<span class="nc bnc" id="L1415" title="All 2 branches missed.">                            + ((cursor == 0) ? ANSI_YELLOW + ANSI_BLINK : ANSI_GREEN) + person.getName() + ANSI_RESET);</span>
+<span class="nc" id="L1416">                    System.out.println(ANSI_BLUE + &quot;Weight: &quot; + ANSI_RESET</span>
+<span class="nc bnc" id="L1417" title="All 2 branches missed.">                            + ((cursor == 1) ? ANSI_YELLOW + ANSI_BLINK : ANSI_GREEN) + person.getWeight()</span>
+<span class="nc" id="L1418">                            + ANSI_RESET);</span>
+<span class="nc bnc" id="L1419" title="All 2 branches missed.">                    if (cursor == -1) {</span>
+<span class="nc" id="L1420">                        System.out.println(ANSI_GREEN + &quot;0. Edit name&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1421">                        System.out.println(ANSI_GREEN + &quot;1. Edit weight&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1422">                        System.out.println(ANSI_RED + &quot;2. Done&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1423">                        System.out.println(ANSI_RED + &quot;3. Undo&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1424">                    } else {</span>
+<span class="nc bnc" id="L1425" title="All 2 branches missed.">                        if (invalidInput)</span>
+<span class="nc" id="L1426">                            System.out.print(ANSI_RED + &quot;Invalid input. Try again:&quot; + ANSI_RESET);</span>
+                        else
+<span class="nc" id="L1428">                            System.out.print(ANSI_BLUE + &quot;Input: &quot; + ANSI_RESET);</span>
+                    }
+
+<span class="nc" id="L1431">                    invalidInput = false;</span>
+<span class="nc" id="L1432">                    input2 = scanner.nextLine();</span>
+<span class="nc bnc" id="L1433" title="All 4 branches missed.">                    if (cursor == -1 &amp;&amp; !input2.matches(&quot;[0-3]&quot;)) {</span>
+<span class="nc" id="L1434">                        invalidInput = true;</span>
+<span class="nc" id="L1435">                        continue;</span>
+<span class="nc bnc" id="L1436" title="All 4 branches missed.">                    } else if (cursor == 0 &amp;&amp; input2.equals(&quot;&quot;)) {</span>
+<span class="nc" id="L1437">                        invalidInput = true;</span>
+<span class="nc" id="L1438">                        continue;</span>
+<span class="nc bnc" id="L1439" title="All 4 branches missed.">                    } else if (cursor == 1 &amp;&amp; !input2.matches(&quot;[0-9]+&quot;)) {</span>
+<span class="nc" id="L1440">                        invalidInput = true;</span>
+<span class="nc" id="L1441">                        continue;</span>
+                    }
+<span class="nc bnc" id="L1443" title="All 4 branches missed.">                    switch (cursor) {</span>
+                        case -1:
+                            // This means the user has just chosen an option.
+<span class="nc bnc" id="L1446" title="All 5 branches missed.">                            switch (Integer.parseInt(input2)) {</span>
+                                case 0:
+<span class="nc" id="L1448">                                    cursor = 0;</span>
+<span class="nc" id="L1449">                                    break;</span>
+                                case 1:
+<span class="nc" id="L1451">                                    cursor = 1;</span>
+<span class="nc" id="L1452">                                    break;</span>
+                                case 2:
+                                    // If mode is add, we add the person.
+<span class="nc bnc" id="L1455" title="All 2 branches missed.">                                    if (mode == EditorMode.ADD) {</span>
+<span class="nc" id="L1456">                                        people.add(person);</span>
+<span class="nc" id="L1457">                                    } else {</span>
+                                        // Else, we are in edit mode, so we update the person.
+<span class="nc" id="L1459">                                        people.get(Integer.parseInt(name)).setName(person.getName());</span>
+<span class="nc" id="L1460">                                        people.get(Integer.parseInt(name)).setWeight(person.getWeight());</span>
+                                    }
+                                case 3:
+<span class="nc" id="L1463">                                    printEditorHeader(&quot;Person&quot;);</span>
+                                    // Print &quot;Saved!&quot;
+<span class="nc" id="L1465">                                    System.out</span>
+<span class="nc bnc" id="L1466" title="All 2 branches missed.">                                            .println(ANSI_GREEN + ((input2 == &quot;2&quot;) ? &quot;Saved!&quot; : &quot;Done.&quot;) + ANSI_RESET);</span>
+                                    // End of person editor.
+<span class="nc" id="L1468">                                    System.out.println(ANSI_BLUE + &quot;== End of person editor ==&quot; + ANSI_RESET);</span>
+                                    // Return true.
+<span class="nc" id="L1470">                                    exitEditor = true;</span>
+<span class="nc" id="L1471">                                    continue;</span>
+                            }
+<span class="nc" id="L1473">                            break;</span>
+                        case 0:
+                            // This means the user is editing the name.
+<span class="nc" id="L1476">                            person.setName(input2);</span>
+                            // Reset cursor.
+<span class="nc" id="L1478">                            cursor = -1;</span>
+<span class="nc" id="L1479">                            break;</span>
+                        case 1:
+                            // This means the user is editing the weight.
+                            try {
+<span class="nc" id="L1483">                                person.setWeight(Integer.parseInt(input2));</span>
+<span class="nc" id="L1484">                            } catch (NumberFormatException e) {</span>
+<span class="nc" id="L1485">                                continue;</span>
+                            }
+                            // Reset cursor.
+<span class="nc" id="L1488">                            cursor = -1;</span>
+<span class="nc" id="L1489">                            break;</span>
+                        default:
+<span class="nc" id="L1491">                            throw new Error(&quot;Invalid cursor value (&quot; + cursor + &quot;)&quot;);</span>
+                    }
+                }
+            }
+        }
+        // Since we should always return with one of the above cases, we should never
+        // reach this point.
+    }
+
+    private boolean buildingEditor() throws Error, IllegalStateException {
+        // If elevator is not initialized, we throw an error.
+<span class="nc bnc" id="L1502" title="All 2 branches missed.">        if (building == null) {</span>
+<span class="nc" id="L1503">            throw new IllegalStateException(&quot;Building not initialized.&quot;);</span>
+        }
+        // Set up scanner.
+<span class="nc" id="L1506">        Scanner scanner = new Scanner(System.in);</span>
+        // Setup the cursor.
+<span class="nc" id="L1508">        int cursor = -1;</span>
+        // Loop.
+<span class="nc" id="L1510">        boolean invalidValue = false;</span>
+<span class="nc" id="L1511">        while (true) {</span>
+<span class="nc" id="L1512">            printEditorHeader(&quot;Building&quot;);</span>
+            // Print the elevator details.
+<span class="nc" id="L1514">            System.out.println(ANSI_BLUE + &quot;Building name: &quot; + ANSI_RESET</span>
+<span class="nc bnc" id="L1515" title="All 2 branches missed.">                    + (cursor == 0 ? ANSI_BLINK + ANSI_YELLOW : ANSI_GREEN) + building.getName() + ANSI_RESET);</span>
+<span class="nc bnc" id="L1516" title="All 2 branches missed.">            System.out.println(ANSI_BLUE + &quot;Entrance floor: &quot; + ANSI_RESET + (cursor == 1 ? ANSI_BLINK : &quot;&quot;)</span>
+<span class="nc bnc" id="L1517" title="All 2 branches missed.">                    + (building.getEntranceFloor() == null ? ANSI_RED + &quot;null&quot;</span>
+<span class="nc" id="L1518">                            : ANSI_GREEN + building.getEntranceFloor().getName() + ANSI_RESET));</span>
+<span class="nc" id="L1519">            System.out.println();</span>
+            // Print the options if user has yet to choose what to modify.
+<span class="nc bnc" id="L1521" title="All 2 branches missed.">            if (cursor == -1) {</span>
+<span class="nc" id="L1522">                System.out.println(ANSI_GREEN + &quot;0. Change building name&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1523">                System.out.println(ANSI_GREEN + &quot;1. Change entrance floor&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1524">                System.out.println(ANSI_RED + &quot;2. Done&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1525">            } else {</span>
+<span class="nc bnc" id="L1526" title="All 2 branches missed.">                if (invalidValue)</span>
+<span class="nc" id="L1527">                    System.out.println(ANSI_RED + &quot;Invalid input. Try again (\&quot;undo\&quot; to undo): &quot; + ANSI_RESET);</span>
+                else
+<span class="nc" id="L1529">                    System.out.println(ANSI_BLUE + &quot;Insert value (\&quot;undo\&quot; to undo): &quot; + ANSI_RESET);</span>
+            }
+<span class="nc" id="L1531">            invalidValue = false;</span>
+            // Get input
+<span class="nc" id="L1533">            String input = &quot;&quot;;</span>
+            // If cursor is -1, we ask to choose an option.
+<span class="nc bnc" id="L1535" title="All 2 branches missed.">            if (cursor == -1) {</span>
+<span class="nc" id="L1536">                input = scanner.nextLine();</span>
+<span class="nc bnc" id="L1537" title="All 2 branches missed.">                if (!input.matches(&quot;[0-2]&quot;)) {</span>
+<span class="nc" id="L1538">                    invalidValue = true;</span>
+<span class="nc" id="L1539">                    continue;</span>
+                }
+                // Set cursor.
+<span class="nc" id="L1542">                cursor = Integer.parseInt(input);</span>
+<span class="nc bnc" id="L1543" title="All 2 branches missed.">                if (cursor == 2) {</span>
+<span class="nc" id="L1544">                    return true;</span>
+                }
+            }
+            // Else, we are asking for a input.
+            else {
+                // Get input. It must be a string. If cursor is 1, we need a valid floor name.
+<span class="nc" id="L1550">                input = scanner.nextLine();</span>
+                // If we get undo, we reset the cursor and continue.
+<span class="nc bnc" id="L1552" title="All 2 branches missed.">                if (input.equals(&quot;undo&quot;)) {</span>
+<span class="nc" id="L1553">                    cursor = -1;</span>
+<span class="nc" id="L1554">                    continue;</span>
+                }
+                // Set the appropriate value.
+<span class="nc bnc" id="L1557" title="All 3 branches missed.">                switch (cursor) {</span>
+                    case 0:
+<span class="nc" id="L1559">                        building.setName(input);</span>
+<span class="nc" id="L1560">                        break;</span>
+                    case 1:
+                        try {
+<span class="nc" id="L1563">                            building.setEntranceFloorNamed(input);</span>
+<span class="nc" id="L1564">                        } catch (IllegalArgumentException e) {</span>
+<span class="nc" id="L1565">                            invalidValue = true;</span>
+<span class="nc" id="L1566">                            continue;</span>
+                        }
+                        ;
+                        break;
+                    default:
+                        // We should never get here.
+<span class="nc" id="L1572">                        throw new Error(&quot;Invalid cursor value.&quot;);</span>
+                }
+                // Reset cursor.
+<span class="nc" id="L1575">                cursor = -1;</span>
+            }
+        }
+        // We should never get here.
+    }
+
+    private void printPersonCatalog() {
+        // Clear the screen.
+<span class="nc" id="L1583">        clearScreen();</span>
+        // Print the person catalog.
+<span class="nc" id="L1585">        System.out.println(ANSI_BLUE + &quot;== Person catalog ==&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1586">        System.out.println(ANSI_BLUE + &quot;There &quot;</span>
+<span class="nc bnc" id="L1587" title="All 2 branches missed.">                + (people.size() == 1 ? &quot;is&quot; : &quot;are&quot;) + &quot; &quot;</span>
+<span class="nc bnc" id="L1588" title="All 2 branches missed.">                + (people.size() == 0 ? ANSI_RED : ANSI_GREEN) + people.size() + ANSI_RESET + ANSI_BLUE + &quot; &quot;</span>
+<span class="nc bnc" id="L1589" title="All 2 branches missed.">                + (people.size() == 1 ? &quot;person&quot; : &quot;people&quot;)</span>
+<span class="nc" id="L1590">                + &quot; in the catalog.&quot; + ANSI_RESET);</span>
+        // Print the people.
+<span class="nc bnc" id="L1592" title="All 2 branches missed.">        for (Person person : people) {</span>
+<span class="nc" id="L1593">            System.out.println(ANSI_GREEN + person.toString());</span>
+        }
+        // End
+<span class="nc" id="L1596">        System.out.println(ANSI_BLUE + &quot;== End of catalog ==&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1597">    }</span>
+
+    private void printHelpMenu() {
+        // Clear the screen.
+<span class="nc" id="L1601">        clearScreen();</span>
+        // Print the help menu.
+<span class="nc" id="L1603">        System.out.println(ANSI_BLUE + &quot;\n == Help menu ==&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1604">        System.out.println(ANSI_YELLOW + &quot;0. Quick view.           &quot; + ANSI_RESET + ANSI_BLINK + &quot;-&gt;&quot; + ANSI_GREEN</span>
+<span class="nc" id="L1605">                + &quot; Open a quick recap of the simulation's status.&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1606">        System.out.println(ANSI_YELLOW + &quot;1. Building editor.      &quot; + ANSI_RESET + ANSI_BLINK + &quot;-&gt;&quot; + ANSI_GREEN</span>
+<span class="nc" id="L1607">                + &quot; Open the building editor.&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1608">        System.out.println(ANSI_YELLOW + &quot;2. Floor editor.         &quot; + ANSI_RESET + ANSI_BLINK + &quot;-&gt;&quot; + ANSI_GREEN</span>
+<span class="nc" id="L1609">                + &quot; Open the floor editor.&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1610">        System.out.println(ANSI_YELLOW + &quot;3. Elevator editor.      &quot; + ANSI_RESET + ANSI_BLINK + &quot;-&gt;&quot; + ANSI_GREEN</span>
+<span class="nc" id="L1611">                + &quot; Open the elevator editor.&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1612">        System.out.println(ANSI_YELLOW + &quot;4. Key editor.           &quot; + ANSI_RESET + ANSI_BLINK + &quot;-&gt;&quot; + ANSI_GREEN</span>
+<span class="nc" id="L1613">                + &quot; Open the key editor.&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1614">        System.out.println(ANSI_YELLOW + &quot;5. Person catalog.       &quot; + ANSI_RESET + ANSI_BLINK + &quot;-&gt;&quot; + ANSI_GREEN</span>
+<span class="nc" id="L1615">                + &quot; Open the person catalog.&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1616">        System.out.println(ANSI_YELLOW + &quot;6. Person editor.        &quot; + ANSI_RESET + ANSI_BLINK + &quot;-&gt;&quot; + ANSI_GREEN</span>
+<span class="nc" id="L1617">                + &quot; Open the person editor.&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1618">        System.out.println(ANSI_YELLOW + &quot;7. Simulation status.    &quot; + ANSI_RESET + ANSI_BLINK + &quot;-&gt;&quot; + ANSI_GREEN</span>
+<span class="nc" id="L1619">                + &quot; Print the simulation status. This includes people in the bulding and their position.&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1620">        System.out.println(ANSI_YELLOW + &quot;8. Run simulation step.  &quot; + ANSI_RESET + ANSI_BLINK + &quot;-&gt;&quot; + ANSI_GREEN</span>
+<span class="nc" id="L1621">                + &quot; Run simulation step. This includes the elevator moving.&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1622">        System.out.println(ANSI_YELLOW + &quot;9. Run action.           &quot; + ANSI_RESET + ANSI_BLINK + &quot;-&gt;&quot; + ANSI_GREEN</span>
+<span class="nc" id="L1623">                + &quot; Run an action, like adding a person, boarding, unboarding or calling a ride.&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1624">        System.out.println(ANSI_YELLOW + &quot;10. Close the program.   &quot; + ANSI_RESET + ANSI_BLINK + &quot;-&gt;&quot; + ANSI_GREEN</span>
+<span class="nc" id="L1625">                + &quot; Stop the simulation and close the program.&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1626">        System.out.println(ANSI_BLUE + &quot;== End of help menu ==   &quot; + ANSI_RESET);</span>
+<span class="nc" id="L1627">    }</span>
+
+    private boolean keyEditor() throws Error {
+        // Set up scanner.
+<span class="nc" id="L1631">        Scanner scanner = new Scanner(System.in);</span>
+        // Editor loop
+<span class="nc" id="L1633">        while (true) {</span>
+            // Ask user for input.
+<span class="nc" id="L1635">            String input = &quot;&quot;;</span>
+<span class="nc" id="L1636">            boolean matchesRegex = true;</span>
+            do {
+<span class="nc" id="L1638">                printEditorHeader(&quot;Key&quot;);</span>
+                // Ask user if he wants to add, edit, delete or view a key.
+<span class="nc" id="L1640">                System.out.println(ANSI_BLUE + &quot;What do you want to do?&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1641">                System.out.println(ANSI_GREEN + &quot;0. Add a key&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1642">                System.out.println(ANSI_YELLOW + &quot;1. Edit a key&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1643">                System.out.println(ANSI_RED + &quot;2. Delete a key&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1644">                System.out.println(ANSI_CYAN + &quot;3. Back&quot; + ANSI_RESET);</span>
+                // Get input.
+<span class="nc bnc" id="L1646" title="All 2 branches missed.">                if (matchesRegex)</span>
+<span class="nc" id="L1647">                    System.out.print(ANSI_BLUE + &quot;Input: &quot; + ANSI_RESET);</span>
+                else
+<span class="nc" id="L1649">                    System.out.print(ANSI_RED + &quot;Invalid input. Try again: &quot; + ANSI_RESET);</span>
+<span class="nc" id="L1650">                input = scanner.nextLine();</span>
+<span class="nc" id="L1651">                matchesRegex = input.matches(&quot;[0-3]&quot;);</span>
+<span class="nc bnc" id="L1652" title="All 2 branches missed.">            } while (!matchesRegex);</span>
+
+            // Remember mode
+            EditorMode mode;
+<span class="nc bnc" id="L1656" title="All 5 branches missed.">            switch (input) {</span>
+                case &quot;0&quot;:
+<span class="nc" id="L1658">                    mode = EditorMode.ADD;</span>
+<span class="nc" id="L1659">                    break;</span>
+                case &quot;1&quot;:
+<span class="nc" id="L1661">                    mode = EditorMode.EDIT;</span>
+<span class="nc" id="L1662">                    break;</span>
+                case &quot;2&quot;:
+<span class="nc" id="L1664">                    mode = EditorMode.DELETE;</span>
+<span class="nc" id="L1665">                    break;</span>
+                case &quot;3&quot;:
+<span class="nc" id="L1667">                    return true;</span>
+                default:
+<span class="nc" id="L1669">                    System.out.println(ANSI_RED + &quot;Invalid input (&quot; + input + &quot;).&quot; + ANSI_RESET);</span>
+                    // If we get here, something went wrong.
+<span class="nc" id="L1671">                    throw new Error(&quot;Invalid program state.&quot;);</span>
+            }
+
+<span class="nc" id="L1674">            Key key = null;</span>
+<span class="nc" id="L1675">            String name = &quot;&quot;;</span>
+            // If the mode isn't add, we need to ask who's the key we want to
+            // edit/show/delete.
+<span class="nc bnc" id="L1678" title="All 2 branches missed.">            if (mode != EditorMode.ADD) {</span>
+<span class="nc bnc" id="L1679" title="All 2 branches missed.">                do {</span>
+<span class="nc" id="L1680">                    printEditorHeader(&quot;Key&quot;);</span>
+                    // Print the key list.
+<span class="nc" id="L1682">                    int i = 0;</span>
+<span class="nc bnc" id="L1683" title="All 2 branches missed.">                    for (; i &lt; building.getKeys().size(); i++) {</span>
+<span class="nc" id="L1684">                        System.out.println(ANSI_BLUE + i + &quot;: &quot; + ANSI_RESET + ANSI_YELLOW</span>
+<span class="nc" id="L1685">                                + building.getKeys().get(i).getName() + ANSI_RESET);</span>
+                    }
+<span class="nc" id="L1687">                    System.out.println(ANSI_BLUE + i + &quot;: &quot; + ANSI_RESET + ANSI_RED + &quot;Back&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1688">                    System.out.print(ANSI_BLUE + &quot;Input the number corresponding to the key to &quot; + mode.toString()</span>
+<span class="nc" id="L1689">                            + &quot;: &quot; + ANSI_RESET);</span>
+                    // Get input.
+<span class="nc" id="L1691">                    name = scanner.nextLine();</span>
+<span class="nc bnc" id="L1692" title="All 4 branches missed.">                } while (name.equals(&quot;&quot;) || !name.matches(&quot;[0-9]+&quot;)</span>
+<span class="nc" id="L1693">                        || Integer.parseInt(name) &gt; building.getKeys().size());</span>
+                // Get the key if the input isn't back.
+<span class="nc bnc" id="L1695" title="All 2 branches missed.">                if (name.equals(Integer.toString(building.getKeys().size()))) {</span>
+<span class="nc" id="L1696">                    continue;</span>
+                }
+<span class="nc" id="L1698">                key = building.getKeys().get(Integer.parseInt(name)).clone();</span>
+            }
+
+            // If add, we initialize a new key.
+<span class="nc bnc" id="L1702" title="All 2 branches missed.">            if (mode == EditorMode.ADD) {</span>
+<span class="nc" id="L1703">                key = new Key();</span>
+            }
+
+            // Just for safety, we check if the key is null.
+<span class="nc bnc" id="L1707" title="All 2 branches missed.">            if (key == null)</span>
+<span class="nc" id="L1708">                throw new Error(&quot;Invalid program state.&quot;);</span>
+
+            // If mode is delete, we need to ask if the user really wants to delete the
+            // person.
+<span class="nc bnc" id="L1712" title="All 2 branches missed.">            if (mode == EditorMode.DELETE) {</span>
+<span class="nc" id="L1713">                printEditorHeader(&quot;Key&quot;);</span>
+                // Print the key delete confirmation.
+<span class="nc" id="L1715">                System.out.println(ANSI_BLUE + &quot;Are you sure you want to delete &quot; + ANSI_RESET + ANSI_YELLOW</span>
+<span class="nc" id="L1716">                        + key.getName() + ANSI_RESET + ANSI_BLUE + &quot;?&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1717">                System.out.println(ANSI_GREEN + &quot;Y. Yes&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1718">                System.out.println(ANSI_RED + &quot;N. No&quot; + ANSI_RESET);</span>
+                // Ask user for input.
+<span class="nc" id="L1720">                String input2 = &quot;&quot;;</span>
+                do {
+<span class="nc" id="L1722">                    input2 = scanner.nextLine();</span>
+<span class="nc bnc" id="L1723" title="All 2 branches missed.">                } while (!input2.matches(&quot;[yn]&quot;));</span>
+
+<span class="nc bnc" id="L1725" title="All 2 branches missed.">                if (input2.equalsIgnoreCase(&quot;y&quot;)) {</span>
+                    // Delete the key.
+<span class="nc" id="L1727">                    building.removeKey(key.getName());</span>
+                    // Clear the screen.
+<span class="nc" id="L1729">                    clearScreen();</span>
+                    // Print the key editor.
+<span class="nc" id="L1731">                    System.out.println(ANSI_BLUE + &quot;== Key editor ==&quot; + ANSI_RESET);</span>
+                    // Print the key delete confirmation.
+<span class="nc" id="L1733">                    System.out.println(ANSI_BLUE + &quot;Key &quot; + ANSI_RESET + ANSI_YELLOW + key.getName() + ANSI_RESET</span>
+<span class="nc" id="L1734">                            + ANSI_BLUE + &quot; deleted.&quot; + ANSI_RESET);</span>
+                    // End of key editor.
+<span class="nc" id="L1736">                    System.out.println(ANSI_BLUE + &quot;== End of key editor ==&quot; + ANSI_RESET);</span>
+                }
+<span class="nc" id="L1738">                continue;</span>
+            }
+            // Else, if we are in view mode, we just print the key.
+<span class="nc bnc" id="L1741" title="All 2 branches missed.">            else if (mode == EditorMode.VIEW) {</span>
+<span class="nc" id="L1742">                printEditorHeader(&quot;Key&quot;);</span>
+                // Print the key name.
+<span class="nc" id="L1744">                System.out.println(ANSI_BLUE + &quot;Key: &quot; + ANSI_RESET + ANSI_YELLOW + key.getName() + ANSI_RESET);</span>
+                // Print the key codes.
+<span class="nc" id="L1746">                System.out.print(ANSI_BLUE + &quot;Codes: &quot; + ANSI_RESET);</span>
+<span class="nc bnc" id="L1747" title="All 2 branches missed.">                for (int i = 0; i &lt; key.getValues().size(); i++) {</span>
+<span class="nc" id="L1748">                    System.out.print(ANSI_YELLOW + key.getValues().get(i) + ANSI_RESET</span>
+<span class="nc bnc" id="L1749" title="All 2 branches missed.">                            + (i == key.getValues().size() - 1 ? &quot;&quot; : &quot;, &quot;));</span>
+                }
+                // Nextline.
+<span class="nc" id="L1752">                System.out.println();</span>
+                // End of key editor.
+<span class="nc" id="L1754">                System.out.println(ANSI_BLUE + &quot;== End of key editor ==&quot; + ANSI_RESET);</span>
+                // Wait for user to press enter.
+<span class="nc" id="L1756">                scanner.nextLine();</span>
+<span class="nc" id="L1757">                continue;</span>
+            }
+            // Else, we are in edit or add mode.
+            else {
+                // Init cursor.
+<span class="nc" id="L1762">                int cursor = -1;</span>
+<span class="nc" id="L1763">                boolean invalidInput = false;</span>
+                // Enter command loop.
+<span class="nc" id="L1765">                boolean exitEditor = false;</span>
+<span class="nc bnc" id="L1766" title="All 2 branches missed.">                while (!exitEditor) {</span>
+                    // Print the person details.
+                    // Depending on cursor, we ask for input in different ways.
+<span class="nc" id="L1769">                    String input2 = &quot;&quot;;</span>
+<span class="nc" id="L1770">                    printEditorHeader(&quot;Key&quot;);</span>
+                    // Print the key name.
+<span class="nc" id="L1772">                    System.out.println(ANSI_BLUE + &quot;Key: &quot; + ANSI_RESET</span>
+<span class="nc bnc" id="L1773" title="All 2 branches missed.">                            + (cursor == 0 ? ANSI_YELLOW + ANSI_BLINK : ANSI_GREEN) + key.getName() + ANSI_RESET);</span>
+                    // Print the key codes.
+<span class="nc" id="L1775">                    System.out.print(ANSI_BLUE + &quot;Codes: &quot; + ANSI_RESET);</span>
+<span class="nc bnc" id="L1776" title="All 2 branches missed.">                    for (int i = 0; i &lt; key.getValues().size(); i++) {</span>
+<span class="nc bnc" id="L1777" title="All 2 branches missed.">                        System.out.print((cursor == 1 ? ANSI_YELLOW : ANSI_GREEN) + key.getValues().get(i) + ANSI_RESET</span>
+<span class="nc bnc" id="L1778" title="All 2 branches missed.">                                + (i == key.getValues().size() - 1 ? &quot;&quot; : &quot;, &quot;));</span>
+                    }
+                    // Nextline.
+<span class="nc" id="L1781">                    System.out.println();</span>
+<span class="nc bnc" id="L1782" title="All 2 branches missed.">                    if (cursor == -1) {</span>
+<span class="nc" id="L1783">                        System.out.println(ANSI_GREEN + &quot;0. Edit name&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1784">                        System.out.println(ANSI_GREEN + &quot;1. Add/remove code&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1785">                        System.out.println(ANSI_RED + &quot;2. Done&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1786">                        System.out.println(ANSI_RED + &quot;3. Undo&quot; + ANSI_RESET);</span>
+<span class="nc" id="L1787">                    } else {</span>
+<span class="nc bnc" id="L1788" title="All 2 branches missed.">                        if (invalidInput)</span>
+<span class="nc" id="L1789">                            System.out.print(ANSI_RED + &quot;Invalid input. Try again:&quot; + ANSI_RESET);</span>
+                        else
+<span class="nc" id="L1791">                            System.out.print(ANSI_BLUE + &quot;Input: &quot; + ANSI_RESET);</span>
+                    }
+
+<span class="nc" id="L1794">                    invalidInput = false;</span>
+<span class="nc" id="L1795">                    input2 = scanner.nextLine();</span>
+<span class="nc bnc" id="L1796" title="All 4 branches missed.">                    if (cursor == -1 &amp;&amp; !input2.matches(&quot;[0-3]&quot;)) {</span>
+<span class="nc" id="L1797">                        invalidInput = true;</span>
+<span class="nc" id="L1798">                        continue;</span>
+<span class="nc bnc" id="L1799" title="All 4 branches missed.">                    } else if (cursor == 0 &amp;&amp; input2.equals(&quot;&quot;)) {</span>
+<span class="nc" id="L1800">                        invalidInput = true;</span>
+<span class="nc" id="L1801">                        continue;</span>
+<span class="nc bnc" id="L1802" title="All 4 branches missed.">                    } else if (cursor == 1 &amp;&amp; !input2.matches(&quot;[0-9]+&quot;)) {</span>
+<span class="nc" id="L1803">                        invalidInput = true;</span>
+<span class="nc" id="L1804">                        continue;</span>
+                    }
+<span class="nc bnc" id="L1806" title="All 4 branches missed.">                    switch (cursor) {</span>
+                        case -1:
+                            // This means the user has just chosen an option.
+<span class="nc bnc" id="L1809" title="All 5 branches missed.">                            switch (Integer.parseInt(input2)) {</span>
+                                case 0:
+<span class="nc" id="L1811">                                    cursor = 0;</span>
+<span class="nc" id="L1812">                                    break;</span>
+                                case 1:
+<span class="nc" id="L1814">                                    cursor = 1;</span>
+<span class="nc" id="L1815">                                    break;</span>
+                                case 2:
+                                    // If mode is add, we add the key.
+<span class="nc bnc" id="L1818" title="All 2 branches missed.">                                    if (mode == EditorMode.ADD) {</span>
+<span class="nc" id="L1819">                                        building.registerKey(key);</span>
+<span class="nc" id="L1820">                                    } else {</span>
+                                        // Else, we are in edit mode, so we update the key.
+<span class="nc" id="L1822">                                        building.getKeys().get(Integer.parseInt(name)).setName(key.getName())</span>
+<span class="nc" id="L1823">                                                .setValues(key.getValues());</span>
+                                    }
+                                case 3:
+                                    // Clear the screen.
+<span class="nc" id="L1827">                                    clearScreen();</span>
+                                    // Print the key editor.
+<span class="nc" id="L1829">                                    System.out.println(ANSI_BLUE + &quot;== Key editor ==&quot; + ANSI_RESET);</span>
+                                    // Print &quot;Saved!&quot;
+<span class="nc" id="L1831">                                    System.out</span>
+<span class="nc bnc" id="L1832" title="All 2 branches missed.">                                            .println(ANSI_GREEN + ((input2 == &quot;2&quot;) ? &quot;Saved!&quot; : &quot;Done.&quot;) + ANSI_RESET);</span>
+                                    // End of key editor.
+<span class="nc" id="L1834">                                    System.out.println(ANSI_BLUE + &quot;== End of key editor ==&quot; + ANSI_RESET);</span>
+                                    // Return true.
+<span class="nc" id="L1836">                                    exitEditor = true;</span>
+<span class="nc" id="L1837">                                    continue;</span>
+                            }
+<span class="nc" id="L1839">                            break;</span>
+                        case 0:
+                            // This means the user is editing the name.
+<span class="nc" id="L1842">                            key.setName(input2);</span>
+                            // Reset cursor.
+<span class="nc" id="L1844">                            cursor = -1;</span>
+<span class="nc" id="L1845">                            break;</span>
+                        case 1:
+                            // This means the user is editing the key codes.
+                            // We &quot;toggle&quot; the code, meaning we add it if it isn't in the list, and remove
+                            // it if it is.
+<span class="nc bnc" id="L1850" title="All 2 branches missed.">                            if (key.getValues().contains(Integer.parseInt(input2))) {</span>
+<span class="nc" id="L1851">                                key.getValues().remove(Integer.valueOf(Integer.parseInt(input2))); // To remove by</span>
+                                                                                                   // value, not by
+                                                                                                   // index.
+<span class="nc" id="L1854">                            } else {</span>
+<span class="nc" id="L1855">                                key.getValues().add(Integer.parseInt(input2));</span>
+                            }
+                            // Reset cursor.
+<span class="nc" id="L1858">                            cursor = -1;</span>
+<span class="nc" id="L1859">                            break;</span>
+                        default:
+<span class="nc" id="L1861">                            throw new Error(&quot;Invalid cursor value (&quot; + cursor + &quot;)&quot;);</span>
+                    }
+                }
+            }
+        }
+        // Since we should always return with one of the above cases, we should never
+        // reach this point.
+    }
+
+    /**
+     * The addNewRole function is the facede method to add keys to the building.
+     * It makes a key with access to the listed floors.
+     * 
+     * @param keyName The name of the key.
+     * @param floors  The floors the key has access to. Take a variable number of
+     *                arguments.
+     * @throws IllegalArgumentException If the key name is already taken.
+     * @throws IllegalArgumentException If the key name is empty.
+     * @throws IllegalArgumentException If any of the floors is not in the building.
+     * @return this to allow chaining.
+     * @note If an exception is thrown, the building is not modified, and the key is
+     *       not added, leaving the building in a legal state.
+     */
+    public Simulator addNewRole(String keyName, String... floors) {
+        // Check if the key name is empty.
+<span class="pc bpc" id="L1886" title="1 of 2 branches missed.">        if (keyName.equals(&quot;&quot;)) {</span>
+<span class="nc" id="L1887">            throw new IllegalArgumentException(&quot;Key name cannot be empty.&quot;);</span>
+        }
+<span class="fc bfc" id="L1889" title="All 2 branches covered.">        for (Key key : building.getKeys()) {</span>
+            // Check if the key name is already taken.
+<span class="pc bpc" id="L1891" title="1 of 2 branches missed.">            if (key.getName().equals(keyName)) {</span>
+<span class="nc" id="L1892">                throw new IllegalArgumentException(&quot;Key name already taken.&quot;);</span>
+            }
+        }
+        // Create the key.
+<span class="fc" id="L1896">        Key key = new Key(keyName);</span>
+        // Add the floors.
+<span class="fc bfc" id="L1898" title="All 2 branches covered.">        for (String floor : floors) {</span>
+            // Check if the floor is in the building.
+<span class="fc" id="L1900">            Floor _floor = building.getFloorNamed(floor);</span>
+<span class="pc bpc" id="L1901" title="1 of 2 branches missed.">            if (_floor == null) {</span>
+<span class="nc" id="L1902">                throw new IllegalArgumentException(&quot;Floor &quot; + floor + &quot; is not in the building.&quot;);</span>
+            }
+            // Add the floor keyCode
+<span class="fc" id="L1905">            key.addKeyValue(_floor.getKey());</span>
+        }
+        // Register the key.
+<span class="fc" id="L1908">        building.registerKey(key);</span>
+<span class="fc" id="L1909">        return this;</span>
+    }
+
+    /**
+     * The addModelPerson function is the facede method to add a person to the
+     * catalog.
+     * 
+     * @param name   The name of the person.
+     * @param weight The weight of the person.
+     * @throws IllegalArgumentException If the name is already taken or empty.
+     * @throws IllegalArgumentException If the weight is non positive.
+     * @return this to allow chaining.
+     */
+    public Simulator addModelPerson(String name, int weight) {
+        // Check if the name is empty.
+<span class="pc bpc" id="L1924" title="1 of 2 branches missed.">        if (name.equals(&quot;&quot;)) {</span>
+<span class="nc" id="L1925">            throw new IllegalArgumentException(&quot;Name cannot be empty.&quot;);</span>
+        }
+<span class="fc bfc" id="L1927" title="All 2 branches covered.">        for (Person person : people) {</span>
+            // Check if the name is already taken.
+<span class="pc bpc" id="L1929" title="1 of 2 branches missed.">            if (person.getName().equals(name)) {</span>
+<span class="nc" id="L1930">                throw new IllegalArgumentException(&quot;Name already taken.&quot;);</span>
+            }
+        }
+        // Create the person.
+<span class="fc" id="L1934">        Person person = new Person(name, weight);</span>
+        // Register the person.
+<span class="fc" id="L1936">        people.add(person);</span>
+<span class="fc" id="L1937">        return this;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>
